@@ -1,0 +1,211 @@
+LAPORAN PENJUALAN KARET 
+Rencana Penjualan Bokar 
+Pabrik Jarak 
+(km) 
+Harga 
+Jual 
+(Rp/kg) 
+Susut 
+(%) 
+Harga 
+Beli 
+(kg) 
+Berat 
+Awal 
+(kg) 
+Berat 
+Jual 
+(kg) 
+ Total Harga Jual 
+(Rp)  
+ Total Harga 
+Beli (Rp)  
+ 
+Keuntungan 
+Kotor (Rp)  
+Depo 
+Cinta 
+Manis 
+45 13700 10 Rp 
+11.500 2000 1800  Rp         
+24,660,000  
+ Rp         
+23,000,000  
+ Rp           
+1,660,000  
+Pabrik 
+ABP 112 15700 13 Rp 
+11.500 2000 1740  Rp         
+27,318,000  
+ Rp         
+23,000,000  
+ Rp           
+4,318,000  
+Pabrik 
+BGP 132 15800 14 Rp 
+11.500 2000 1720  Rp         
+27,176,000  
+ Rp         
+23,000,000  
+ Rp           
+4,176,000  
+Pabrik 
+BAP 143 15100 17 Rp 
+11.500 2000 1660  Rp         
+25,398,000  
+ Rp         
+23,000,000  
+ Rp           
+2,398,000  
+ 
+Pabrik  Ongkos Kirim (Rp)   Keuntungan Bersih (Rp)  Rekomendasi 
+Depo Cinta Manis  Rp                                                     
+1,000,000   Rp                           660,000  Kurang menguntungkan karena harga jual 
+lebih rendah. 
+Pabrik ABP  Rp                                                     
+1,200,000   Rp                       3,118,000  Paling menguntungkan dengan profit terbesar. 
+Pabrik BGP  Rp                                                     
+1,300,000   Rp                       2,876,000  Alternatif terbaik setelah Pabrik B. 
+Pabrik BAP  Rp                                                     
+1,500,000   Rp                           898,000  Kurang direkomendasikan karena jarak terlalu 
+jauh dan susut tinggi. 
+ 
+  
+4. Strategi dan Risiko Pasar Penjualan Karet 
+Strategi dan Risiko Penjualan Karet 
+No  Aspek   Risiko   Solusi  
+1 Penyusutan Berlebih 
+Jika susut lebih dari 
+estimasi, profit bisa 
+menurun 
+Gunakn transportasi cepat dan tertutup, pastikan 
+karet tidak terlalu lama dalam Perjalanan dan 
+terpapar matahari 
+2 Fluktuasi Harga Pasar 
+Jika harga jual 
+turun, profit bisa 
+berkurang. 
+Negosiasi kontrak harga tetap. Fokus menjual saat 
+harga pasar stabil atau naik. 
+3 Biaya Transportasi 
+Tinggi 
+Biaya pengiriman 
+memengaruhi 
+profitabilitas. 
+Kirim dalam volume besar untuk menekan biaya. Cari 
+rute tercepat dan efisien. Kolaborasi dengan 
+pengangkut untuk mendapatkan harga lebih murah. 
+4 Kapasitas Pengiriman 
+Pengiriman dalam 
+jumlah kecil 
+meningkatkan 
+biaya per kg. 
+Gunakan kendaraan dengan kapasitas lebih besar 
+untuk menekan biaya per kg. 
+5 Kualitas Karet 
+Karet berkualitas 
+rendah mengurangi 
+harga jual. 
+Pastikan karet disimpan dengan baik sebelum 
+pengiriman. Pilih pemasok dengan kualitas terbaik. 
+6 Persaingan Pasar 
+Banyaknya pesaing 
+dapat menekan 
+harga pasar. 
+Bangun hubungan baik dengan pabrik untuk 
+mendapatkan harga lebih stabil. Tingkatkan kualitas 
+produk untuk keunggulan kompetitif. 
+7 Perubahan Regulasi 
+Perubahan regulasi 
+bisa memengaruhi 
+biaya operasional. 
+Selalu mengikuti perkembangan kebijakan pemerintah 
+dan menyesuaikan strategi bisnis. 
+8 Kondisi Cuaca 
+Cuaca ekstrem 
+dapat menghambat 
+distribusi dan 
+meningkatkan 
+susut. 
+Pantau kondisi cuaca sebelum pengiriman dan buat 
+rencana cadangan jika terjadi cuaca buruk. 
+ 
+5. KESIMPULAN & REKOMENDASI 
+• Profitabilitas tertinggi ditemukan pada Pabrik B dengan keuntungan bersih Rp 3.118.000. 
+• Pabrik A memiliki ongkos kirim lebih rendah, tetapi harga jual lebih kecil, sehingga profit lebih 
+rendah. 
+• Pabrik D kurang menguntungkan karena jarak terlalu jauh dan tingkat susut lebih tinggi. 
+• Strategi utama: 
+o Optimalkan pengiriman ke pabrik dengan harga jual terbaik dan susut terendah. 
+o Gunakan moda transportasi efisien untuk mengurangi biaya operasional. 
+o Jadwalkan pengiriman secara berkala untuk memaksimalkan efisiensi.  
+Realisasi Anggaran 
+Realisasi Anggaran Biaya 
+No Tanggal In Out Balance Volume Keterangan 
+1 2/6/2025  Rp   
+1,000,000     Rp   
+1,000,000  1 Lot Kredit Kas 
+2 2/6/2025    Rp    
+859,000  
+ Rp       
+141,000  1 Pcs Beli Timbangan Duduk 150 Kg 
+3 2/9/2025  Rp 
+10,000,000     Rp 
+10,141,000  1 Lot Kredit KAS 
+4 2/9/2025    Rp    
+120,000  
+ Rp 
+10,021,000  1 Trip Biaya Travel PLB - Jalur 16 
+5 2/10/2025    Rp    
+300,000  
+ Rp   
+9,721,000  2 trip Biaya Kunjungan Supplier 2 Hari 3 
+Orang 
+6 2/12/2025    Rp    
+120,000  
+ Rp   
+9,601,000  1 Trip Biaya Travel Jlr 16 - PLB 
+7 2/14/2025    
+Rp3,714,000  
+ Rp   
+5,887,000  323 kg Pembelian Bokar Karet 
+8 2/16/2025    
+Rp1,759,500  
+ Rp   
+4,127,500  153 Kg Pembelian Bokar Karet 
+9 2/17/2025    Rp    
+989,000  
+ Rp   
+3,138,500  86 Kg Pembelian Bokar Karet 
+10 2/17/2025    Rp      
+56,200  
+ Rp   
+3,082,300  562 Kg Jemput Karet Dari Kebun  
+ 
+Kesimpulan Realisasi Anggaran Biaya 
+Berdasarkan tabel realisasi anggaran biaya yang diberikan, berikut adalah beberapa poin kesimpulan 
+utama: 
+1. Pengeluaran Utama 
+• Total dana awal (Debet KAS): Rp10.000.000. 
+• Biaya operasional utama: 
+o Transportasi (Travel & Kunjungan Supplier): Rp540.000. 
+o Pembelian Bokar Karet: 
+▪ 14 Februari 2025: 323 kg seharga Rp3.714.000. 
+▪ 16 Februari 2025: 153 kg seharga Rp1.759.500. 
+▪ 17 Februari 2025: 86 kg seharga Rp989.000. 
+o Biaya Jemput Karet dari Kebun: Rp56.200. 
+2. Sisa Anggaran 
+• Setelah semua pengeluaran, saldo akhir adalah Rp2.941.300. 
+3. Efisiensi Anggaran 
+• Sebagian besar dana dialokasikan untuk pembelian karet bokar, dengan total 562 kg yang 
+telah dibeli dalam beberapa tahap. 
+• Pengeluaran transportasi cukup terkendali, hanya sekitar 5,4% dari total dana. 
+• Terdapat sisa anggaran Rp2.941.300, yang masih dapat digunakan untuk kebutuhan tambahan 
+atau pembelian berikutnya. 
+4. Rekomendasi 
+• Optimalisasi biaya transportasi, mungkin dengan menggabungkan kunjungan atau mencari 
+alternatif biaya yang lebih rendah. 
+• Penggunaan sisa anggaran bisa dialokasikan untuk tambahan pembelian getah karet guna 
+meningkatkan volume stok. 
+• Evaluasi harga jual dan keuntungan untuk memastikan margin profit yang sesuai dengan 
+investasi.

@@ -26,97 +26,66 @@ engine = create_engine(
 Base = declarative_base()
 
 # Definisikan model/tabel
-class Company(Base):
-    __tablename__ = 'companies'
+class Perusahaan(Base):
+    __tablename__ = 'perusahaan'
     
     id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False)
-    industry = Column(String)
-    founded_date = Column(Date)
+    nama = Column(String, nullable=False)
+    jenis = Column(String)  # Misalnya: Pabrik, Depo
     
     # Relationships
-    financial_data = relationship("FinancialData", back_populates="company", cascade="all, delete-orphan")
-    balance_sheets = relationship("BalanceSheet", back_populates="company", cascade="all, delete-orphan")
-    cash_flows = relationship("CashFlow", back_populates="company", cascade="all, delete-orphan")
-    kpis = relationship("KPI", back_populates="company", cascade="all, delete-orphan")
-    financial_notes = relationship("FinancialNote", back_populates="company", cascade="all, delete-orphan")
+    penjualan_karet = relationship("PenjualanKaret", back_populates="perusahaan", cascade="all, delete-orphan")
+    strategi_risiko = relationship("StrategiRisiko", back_populates="perusahaan", cascade="all, delete-orphan")
+    realisasi_anggaran = relationship("RealisasiAnggaran", back_populates="perusahaan", cascade="all, delete-orphan")
 
-class FinancialData(Base):
-    __tablename__ = 'financial_data'
+class PenjualanKaret(Base):
+    __tablename__ = 'penjualan_karet'
     
     id = Column(Integer, primary_key=True)
-    company_id = Column(Integer, ForeignKey('companies.id'), nullable=False)
-    year = Column(Integer, nullable=False)
-    month = Column(Integer, nullable=False)
-    revenue = Column(Float, default=0)
-    cogs = Column(Float, default=0)
-    operational_expenses = Column(Float, default=0)
-    other_expenses = Column(Float, default=0)
-    tax_rate = Column(Float, default=0.2)
+    perusahaan_id = Column(Integer, ForeignKey('perusahaan.id'), nullable=False)
+    tanggal = Column(Date)
+    jarak = Column(Float, default=0)  # dalam km
+    harga_jual = Column(Float, default=0)  # per kg
+    susut = Column(Float, default=0)  # dalam persen
+    harga_beli = Column(Float, default=0)  # per kg
+    berat_awal = Column(Float, default=0)  # dalam kg
+    berat_jual = Column(Float, default=0)  # dalam kg
+    total_harga_jual = Column(Float, default=0)
+    total_harga_beli = Column(Float, default=0)
+    keuntungan_kotor = Column(Float, default=0)
+    ongkos_kirim = Column(Float, default=0)
+    keuntungan_bersih = Column(Float, default=0)
+    rekomendasi = Column(String)
     
     # Relationship
-    company = relationship("Company", back_populates="financial_data")
+    perusahaan = relationship("Perusahaan", back_populates="penjualan_karet")
 
-class BalanceSheet(Base):
-    __tablename__ = 'balance_sheets'
+class StrategiRisiko(Base):
+    __tablename__ = 'strategi_risiko'
     
     id = Column(Integer, primary_key=True)
-    company_id = Column(Integer, ForeignKey('companies.id'), nullable=False)
-    year = Column(Integer, nullable=False)
-    current_assets = Column(Float, default=0)
-    fixed_assets = Column(Float, default=0)
-    short_term_liabilities = Column(Float, default=0)
-    long_term_liabilities = Column(Float, default=0)
-    owner_equity = Column(Float, default=0)
-    retained_earnings = Column(Float, default=0)
+    perusahaan_id = Column(Integer, ForeignKey('perusahaan.id'), nullable=False)
+    aspek = Column(String)
+    risiko = Column(String)
+    solusi = Column(String)
     
     # Relationship
-    company = relationship("Company", back_populates="balance_sheets")
+    perusahaan = relationship("Perusahaan", back_populates="strategi_risiko")
 
-class CashFlow(Base):
-    __tablename__ = 'cash_flows'
+class RealisasiAnggaran(Base):
+    __tablename__ = 'realisasi_anggaran'
     
     id = Column(Integer, primary_key=True)
-    company_id = Column(Integer, ForeignKey('companies.id'), nullable=False)
-    year = Column(Integer, nullable=False)
-    month = Column(Integer, nullable=False)
-    operational_cash_flow = Column(Float, default=0)
-    investment_cash_flow = Column(Float, default=0)
-    financing_cash_flow = Column(Float, default=0)
+    perusahaan_id = Column(Integer, ForeignKey('perusahaan.id'), nullable=False)
+    tanggal = Column(Date)
+    debet = Column(Float, default=0)  # uang masuk
+    kredit = Column(Float, default=0)  # uang keluar
+    saldo = Column(Float, default=0)  # saldo akhir
+    volume = Column(String)  # misalnya: "1 Lot", "323 kg"
+    keterangan = Column(String)
     
     # Relationship
-    company = relationship("Company", back_populates="cash_flows")
-
-class KPI(Base):
-    __tablename__ = 'kpis'
-    
-    id = Column(Integer, primary_key=True)
-    company_id = Column(Integer, ForeignKey('companies.id'), nullable=False)
-    year = Column(Integer, nullable=False)
-    cac = Column(Float, default=0)  # Customer Acquisition Cost
-    ltv = Column(Float, default=0)  # Lifetime Value
-    burn_rate = Column(Float, default=0)
-    revenue_growth = Column(Float, default=0.1)
-    expense_growth = Column(Float, default=0.08)
-    projection_years = Column(Integer, default=3)
-    
-    # Relationship
-    company = relationship("Company", back_populates="kpis")
-
-class FinancialNote(Base):
-    __tablename__ = 'financial_notes'
-    
-    id = Column(Integer, primary_key=True)
-    company_id = Column(Integer, ForeignKey('companies.id'), nullable=False)
-    year = Column(Integer, nullable=False)
-    growth_strategy = Column(String)
-    business_risks = Column(String)
-    anomalies = Column(String)
-    funding_requirements = Column(Float, default=0)
-    funding_allocation = Column(String)
-    
-    # Relationship
-    company = relationship("Company", back_populates="financial_notes")
+    perusahaan = relationship("Perusahaan", back_populates="realisasi_anggaran")
 
 # Buat tabel di database jika belum ada
 Base.metadata.create_all(engine)
@@ -139,175 +108,16 @@ def get_db_session():
         # db.close() dipanggil di fungsi yang menggunakan get_db_session
         pass
 
-# Function untuk menyimpan data ke database
-def save_financial_data(company_id, year, month, revenue, cogs, op_expenses, other_expenses, tax_rate=0.2):
+# Function untuk menyimpan dan mendapatkan data penjualan karet
+def tambah_perusahaan(nama, jenis=None):
+    """
+    Menambahkan perusahaan baru ke database
+    """
     db = get_db_session()
     
-    # Cek apakah data sudah ada untuk bulan dan tahun tertentu
-    existing_data = db.query(FinancialData).filter(
-        FinancialData.company_id == company_id,
-        FinancialData.year == year,
-        FinancialData.month == month
-    ).first()
-    
-    if existing_data:
-        # Update data yang sudah ada
-        existing_data.revenue = revenue
-        existing_data.cogs = cogs
-        existing_data.operational_expenses = op_expenses
-        existing_data.other_expenses = other_expenses
-        existing_data.tax_rate = tax_rate
-    else:
-        # Buat data baru
-        new_data = FinancialData(
-            company_id=company_id,
-            year=year,
-            month=month,
-            revenue=revenue,
-            cogs=cogs,
-            operational_expenses=op_expenses,
-            other_expenses=other_expenses,
-            tax_rate=tax_rate
-        )
-        db.add(new_data)
-    
-    db.commit()
-
-def save_balance_sheet(company_id, year, current_assets, fixed_assets, short_term_liabilities, 
-                      long_term_liabilities, owner_equity, retained_earnings):
-    db = get_db_session()
-    
-    # Cek apakah balance sheet sudah ada untuk tahun tertentu
-    existing_data = db.query(BalanceSheet).filter(
-        BalanceSheet.company_id == company_id,
-        BalanceSheet.year == year
-    ).first()
-    
-    if existing_data:
-        # Update data yang sudah ada
-        existing_data.current_assets = current_assets
-        existing_data.fixed_assets = fixed_assets
-        existing_data.short_term_liabilities = short_term_liabilities
-        existing_data.long_term_liabilities = long_term_liabilities
-        existing_data.owner_equity = owner_equity
-        existing_data.retained_earnings = retained_earnings
-    else:
-        # Buat data baru
-        new_data = BalanceSheet(
-            company_id=company_id,
-            year=year,
-            current_assets=current_assets,
-            fixed_assets=fixed_assets,
-            short_term_liabilities=short_term_liabilities,
-            long_term_liabilities=long_term_liabilities,
-            owner_equity=owner_equity,
-            retained_earnings=retained_earnings
-        )
-        db.add(new_data)
-    
-    db.commit()
-
-def save_cash_flow(company_id, year, month, operational_cash_flow, investment_cash_flow, financing_cash_flow):
-    db = get_db_session()
-    
-    # Cek apakah data sudah ada untuk bulan dan tahun tertentu
-    existing_data = db.query(CashFlow).filter(
-        CashFlow.company_id == company_id,
-        CashFlow.year == year,
-        CashFlow.month == month
-    ).first()
-    
-    if existing_data:
-        # Update data yang sudah ada
-        existing_data.operational_cash_flow = operational_cash_flow
-        existing_data.investment_cash_flow = investment_cash_flow
-        existing_data.financing_cash_flow = financing_cash_flow
-    else:
-        # Buat data baru
-        new_data = CashFlow(
-            company_id=company_id,
-            year=year,
-            month=month,
-            operational_cash_flow=operational_cash_flow,
-            investment_cash_flow=investment_cash_flow,
-            financing_cash_flow=financing_cash_flow
-        )
-        db.add(new_data)
-    
-    db.commit()
-
-def save_kpi(company_id, year, cac, ltv, burn_rate, revenue_growth=0.1, expense_growth=0.08, projection_years=3):
-    db = get_db_session()
-    
-    # Cek apakah KPI sudah ada untuk tahun tertentu
-    existing_data = db.query(KPI).filter(
-        KPI.company_id == company_id,
-        KPI.year == year
-    ).first()
-    
-    if existing_data:
-        # Update data yang sudah ada
-        existing_data.cac = cac
-        existing_data.ltv = ltv
-        existing_data.burn_rate = burn_rate
-        existing_data.revenue_growth = revenue_growth
-        existing_data.expense_growth = expense_growth
-        existing_data.projection_years = projection_years
-    else:
-        # Buat data baru
-        new_data = KPI(
-            company_id=company_id,
-            year=year,
-            cac=cac,
-            ltv=ltv,
-            burn_rate=burn_rate,
-            revenue_growth=revenue_growth,
-            expense_growth=expense_growth,
-            projection_years=projection_years
-        )
-        db.add(new_data)
-    
-    db.commit()
-
-def save_financial_note(company_id, year, growth_strategy, business_risks, anomalies, 
-                        funding_requirements, funding_allocation):
-    db = get_db_session()
-    
-    # Cek apakah financial note sudah ada untuk tahun tertentu
-    existing_data = db.query(FinancialNote).filter(
-        FinancialNote.company_id == company_id,
-        FinancialNote.year == year
-    ).first()
-    
-    if existing_data:
-        # Update data yang sudah ada
-        existing_data.growth_strategy = growth_strategy
-        existing_data.business_risks = business_risks
-        existing_data.anomalies = anomalies
-        existing_data.funding_requirements = funding_requirements
-        existing_data.funding_allocation = funding_allocation
-    else:
-        # Buat data baru
-        new_data = FinancialNote(
-            company_id=company_id,
-            year=year,
-            growth_strategy=growth_strategy,
-            business_risks=business_risks,
-            anomalies=anomalies,
-            funding_requirements=funding_requirements,
-            funding_allocation=funding_allocation
-        )
-        db.add(new_data)
-    
-    db.commit()
-
-def create_company(name, industry=None, founded_date=None):
-    db = get_db_session()
-    
-    new_company = Company(
-        name=name,
-        industry=industry,
-        founded_date=founded_date
+    new_company = Perusahaan(
+        nama=nama,
+        jenis=jenis
     )
     
     db.add(new_company)
@@ -316,72 +126,348 @@ def create_company(name, industry=None, founded_date=None):
     
     return new_company.id
 
-def get_companies():
+def get_perusahaan():
+    """
+    Mendapatkan semua perusahaan
+    """
     db = get_db_session()
-    return db.query(Company).all()
+    return db.query(Perusahaan).all()
 
-def get_company_by_id(company_id):
+def get_perusahaan_by_id(perusahaan_id):
+    """
+    Mendapatkan perusahaan berdasarkan ID
+    """
     db = get_db_session()
-    return db.query(Company).filter(Company.id == company_id).first()
+    return db.query(Perusahaan).filter(Perusahaan.id == perusahaan_id).first()
 
-def get_financial_data(company_id, year=None):
+def simpan_penjualan_karet(perusahaan_id, tanggal, jarak, harga_jual, susut, harga_beli, 
+                          berat_awal, berat_jual, total_harga_jual, total_harga_beli, 
+                          keuntungan_kotor, ongkos_kirim, keuntungan_bersih, rekomendasi):
+    """
+    Menyimpan data penjualan karet
+    """
     db = get_db_session()
-    query = db.query(FinancialData).filter(FinancialData.company_id == company_id)
     
-    if year:
-        query = query.filter(FinancialData.year == year)
+    # Cek apakah data sudah ada
+    existing_data = db.query(PenjualanKaret).filter(
+        PenjualanKaret.perusahaan_id == perusahaan_id,
+        PenjualanKaret.tanggal == tanggal
+    ).first()
+    
+    if existing_data:
+        # Update data yang sudah ada
+        existing_data.jarak = jarak
+        existing_data.harga_jual = harga_jual
+        existing_data.susut = susut
+        existing_data.harga_beli = harga_beli
+        existing_data.berat_awal = berat_awal
+        existing_data.berat_jual = berat_jual
+        existing_data.total_harga_jual = total_harga_jual
+        existing_data.total_harga_beli = total_harga_beli
+        existing_data.keuntungan_kotor = keuntungan_kotor
+        existing_data.ongkos_kirim = ongkos_kirim
+        existing_data.keuntungan_bersih = keuntungan_bersih
+        existing_data.rekomendasi = rekomendasi
+    else:
+        # Buat data baru
+        new_data = PenjualanKaret(
+            perusahaan_id=perusahaan_id,
+            tanggal=tanggal,
+            jarak=jarak,
+            harga_jual=harga_jual,
+            susut=susut,
+            harga_beli=harga_beli,
+            berat_awal=berat_awal,
+            berat_jual=berat_jual,
+            total_harga_jual=total_harga_jual,
+            total_harga_beli=total_harga_beli,
+            keuntungan_kotor=keuntungan_kotor,
+            ongkos_kirim=ongkos_kirim,
+            keuntungan_bersih=keuntungan_bersih,
+            rekomendasi=rekomendasi
+        )
+        db.add(new_data)
+    
+    db.commit()
+
+def get_penjualan_karet(perusahaan_id=None):
+    """
+    Mendapatkan data penjualan karet
+    """
+    db = get_db_session()
+    query = db.query(PenjualanKaret)
+    
+    if perusahaan_id:
+        query = query.filter(PenjualanKaret.perusahaan_id == perusahaan_id)
     
     return query.all()
 
-def get_balance_sheet(company_id, year=None):
+# Function untuk menyimpan dan mendapatkan data strategi risiko
+def simpan_strategi_risiko(perusahaan_id, aspek, risiko, solusi):
+    """
+    Menyimpan data strategi risiko
+    """
     db = get_db_session()
-    query = db.query(BalanceSheet).filter(BalanceSheet.company_id == company_id)
     
-    if year:
-        query = query.filter(BalanceSheet.year == year)
+    # Cek apakah data sudah ada
+    existing_data = db.query(StrategiRisiko).filter(
+        StrategiRisiko.perusahaan_id == perusahaan_id,
+        StrategiRisiko.aspek == aspek
+    ).first()
+    
+    if existing_data:
+        # Update data yang sudah ada
+        existing_data.risiko = risiko
+        existing_data.solusi = solusi
+    else:
+        # Buat data baru
+        new_data = StrategiRisiko(
+            perusahaan_id=perusahaan_id,
+            aspek=aspek,
+            risiko=risiko,
+            solusi=solusi
+        )
+        db.add(new_data)
+    
+    db.commit()
+
+def get_strategi_risiko(perusahaan_id=None):
+    """
+    Mendapatkan data strategi risiko
+    """
+    db = get_db_session()
+    query = db.query(StrategiRisiko)
+    
+    if perusahaan_id:
+        query = query.filter(StrategiRisiko.perusahaan_id == perusahaan_id)
     
     return query.all()
 
-def get_cash_flow(company_id, year=None):
+# Function untuk menyimpan dan mendapatkan data realisasi anggaran
+def simpan_realisasi_anggaran(perusahaan_id, tanggal, debet, kredit, saldo, volume, keterangan):
+    """
+    Menyimpan data realisasi anggaran
+    """
     db = get_db_session()
-    query = db.query(CashFlow).filter(CashFlow.company_id == company_id)
     
-    if year:
-        query = query.filter(CashFlow.year == year)
+    # Cek apakah data sudah ada
+    existing_data = db.query(RealisasiAnggaran).filter(
+        RealisasiAnggaran.perusahaan_id == perusahaan_id,
+        RealisasiAnggaran.tanggal == tanggal,
+        RealisasiAnggaran.keterangan == keterangan
+    ).first()
+    
+    if existing_data:
+        # Update data yang sudah ada
+        existing_data.debet = debet
+        existing_data.kredit = kredit
+        existing_data.saldo = saldo
+        existing_data.volume = volume
+    else:
+        # Buat data baru
+        new_data = RealisasiAnggaran(
+            perusahaan_id=perusahaan_id,
+            tanggal=tanggal,
+            debet=debet,
+            kredit=kredit,
+            saldo=saldo,
+            volume=volume,
+            keterangan=keterangan
+        )
+        db.add(new_data)
+    
+    db.commit()
+
+def get_realisasi_anggaran(perusahaan_id=None):
+    """
+    Mendapatkan data realisasi anggaran
+    """
+    db = get_db_session()
+    query = db.query(RealisasiAnggaran)
+    
+    if perusahaan_id:
+        query = query.filter(RealisasiAnggaran.perusahaan_id == perusahaan_id)
     
     return query.all()
 
-def get_kpis(company_id, year=None):
-    db = get_db_session()
-    query = db.query(KPI).filter(KPI.company_id == company_id)
-    
-    if year:
-        query = query.filter(KPI.year == year)
-    
-    return query.all()
-
-def get_financial_notes(company_id, year=None):
-    db = get_db_session()
-    query = db.query(FinancialNote).filter(FinancialNote.company_id == company_id)
-    
-    if year:
-        query = query.filter(FinancialNote.year == year)
-    
-    return query.all()
-
-# Inisialisasi database tanpa data dummy
-def init_db_with_default_data():
+# Inisialisasi database dengan data penjualan karet
+def init_db_with_karet_data():
     db = get_db_session()
     
     # Cek apakah ada perusahaan
-    companies = db.query(Company).all()
+    companies = db.query(Perusahaan).all()
     
-    # Tidak perlu membuat data default, cukup kembalikan ID perusahaan jika ada
-    if companies:
-        return companies[0].id
+    if not companies:
+        # Buat perusahaan untuk laporan karet
+        depo_cinta_manis = Perusahaan(
+            nama="Depo Cinta Manis",
+            jenis="Depo"
+        )
+        pabrik_abp = Perusahaan(
+            nama="Pabrik ABP",
+            jenis="Pabrik"
+        )
+        pabrik_bgp = Perusahaan(
+            nama="Pabrik BGP",
+            jenis="Pabrik"
+        )
+        pabrik_bap = Perusahaan(
+            nama="Pabrik BAP",
+            jenis="Pabrik"
+        )
+        
+        db.add_all([depo_cinta_manis, pabrik_abp, pabrik_bgp, pabrik_bap])
+        db.commit()
+        
+        # Refresh objects untuk mendapatkan ID
+        db.refresh(depo_cinta_manis)
+        db.refresh(pabrik_abp)
+        db.refresh(pabrik_bgp)
+        db.refresh(pabrik_bap)
+        
+        # Tambahkan data penjualan karet dari contoh
+        tanggal = datetime.date(2025, 4, 15)  # Tanggal contoh
+        
+        # Data untuk Depo Cinta Manis
+        penjualan_dcm = PenjualanKaret(
+            perusahaan_id=depo_cinta_manis.id,
+            tanggal=tanggal,
+            jarak=45,
+            harga_jual=13700,
+            susut=10,
+            harga_beli=11500,
+            berat_awal=2000,
+            berat_jual=1800,
+            total_harga_jual=24660000,
+            total_harga_beli=23000000,
+            keuntungan_kotor=1660000,
+            ongkos_kirim=1000000,
+            keuntungan_bersih=660000,
+            rekomendasi="Kurang menguntungkan karena harga jual lebih rendah."
+        )
+        
+        # Data untuk Pabrik ABP
+        penjualan_abp = PenjualanKaret(
+            perusahaan_id=pabrik_abp.id,
+            tanggal=tanggal,
+            jarak=112,
+            harga_jual=15700,
+            susut=13,
+            harga_beli=11500,
+            berat_awal=2000,
+            berat_jual=1740,
+            total_harga_jual=27318000,
+            total_harga_beli=23000000,
+            keuntungan_kotor=4318000,
+            ongkos_kirim=1200000,
+            keuntungan_bersih=3118000,
+            rekomendasi="Paling menguntungkan dengan profit terbesar."
+        )
+        
+        # Data untuk Pabrik BGP
+        penjualan_bgp = PenjualanKaret(
+            perusahaan_id=pabrik_bgp.id,
+            tanggal=tanggal,
+            jarak=132,
+            harga_jual=15800,
+            susut=14,
+            harga_beli=11500,
+            berat_awal=2000,
+            berat_jual=1720,
+            total_harga_jual=27176000,
+            total_harga_beli=23000000,
+            keuntungan_kotor=4176000,
+            ongkos_kirim=1300000,
+            keuntungan_bersih=2876000,
+            rekomendasi="Alternatif terbaik setelah Pabrik B."
+        )
+        
+        # Data untuk Pabrik BAP
+        penjualan_bap = PenjualanKaret(
+            perusahaan_id=pabrik_bap.id,
+            tanggal=tanggal,
+            jarak=143,
+            harga_jual=15100,
+            susut=17,
+            harga_beli=11500,
+            berat_awal=2000,
+            berat_jual=1660,
+            total_harga_jual=25398000,
+            total_harga_beli=23000000,
+            keuntungan_kotor=2398000,
+            ongkos_kirim=1500000,
+            keuntungan_bersih=898000,
+            rekomendasi="Kurang direkomendasikan karena jarak terlalu jauh dan susut tinggi."
+        )
+        
+        db.add_all([penjualan_dcm, penjualan_abp, penjualan_bgp, penjualan_bap])
+        
+        # Tambahkan data strategi risiko
+        strategi_risiko = [
+            StrategiRisiko(
+                perusahaan_id=pabrik_abp.id,
+                aspek="Penyusutan Berlebih",
+                risiko="Jika susut lebih dari estimasi, profit bisa menurun",
+                solusi="Gunakn transportasi cepat dan tertutup, pastikan karet tidak terlalu lama dalam Perjalanan dan terpapar matahari"
+            ),
+            StrategiRisiko(
+                perusahaan_id=pabrik_abp.id,
+                aspek="Fluktuasi Harga Pasar",
+                risiko="Jika harga jual turun, profit bisa berkurang.",
+                solusi="Negosiasi kontrak harga tetap. Fokus menjual saat harga pasar stabil atau naik."
+            ),
+            StrategiRisiko(
+                perusahaan_id=pabrik_abp.id,
+                aspek="Biaya Transportasi Tinggi",
+                risiko="Biaya pengiriman memengaruhi profitabilitas.",
+                solusi="Kirim dalam volume besar untuk menekan biaya. Cari rute tercepat dan efisien. Kolaborasi dengan pengangkut untuk mendapatkan harga lebih murah."
+            )
+        ]
+        
+        db.add_all(strategi_risiko)
+        
+        # Tambahkan data realisasi anggaran
+        realisasi_anggaran = [
+            RealisasiAnggaran(
+                perusahaan_id=pabrik_abp.id,
+                tanggal=datetime.date(2025, 2, 6),
+                debet=1000000,
+                kredit=0,
+                saldo=1000000,
+                volume="1 Lot",
+                keterangan="Kredit Kas"
+            ),
+            RealisasiAnggaran(
+                perusahaan_id=pabrik_abp.id,
+                tanggal=datetime.date(2025, 2, 6),
+                debet=0,
+                kredit=859000,
+                saldo=141000,
+                volume="1 Pcs",
+                keterangan="Beli Timbangan Duduk 150 Kg"
+            ),
+            RealisasiAnggaran(
+                perusahaan_id=pabrik_abp.id,
+                tanggal=datetime.date(2025, 2, 9),
+                debet=10000000,
+                kredit=0,
+                saldo=10141000,
+                volume="1 Lot",
+                keterangan="Kredit KAS"
+            )
+        ]
+        
+        db.add_all(realisasi_anggaran)
+        db.commit()
+        
+        print("Database diinisialisasi dengan data penjualan karet")
+        return pabrik_abp.id
     
-    # Jika tidak ada perusahaan, kembalikan None
-    return None
+    return companies[0].id
 
 # Jalankan inisialisasi database
-default_company_id = init_db_with_default_data()
+try:
+    default_perusahaan_id = init_db_with_karet_data()
+except Exception as e:
+    print(f"Error saat inisialisasi database: {e}")
+    default_perusahaan_id = None
