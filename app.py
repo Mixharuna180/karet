@@ -12,6 +12,14 @@ from financial_utils import (
     calculate_debt_to_equity
 )
 from pdf_generator import generate_pdf
+from database import (
+    get_companies, get_company_by_id, create_company,
+    get_financial_data, save_financial_data,
+    get_balance_sheet, save_balance_sheet, 
+    get_cash_flow, save_cash_flow,
+    get_kpis, save_kpi,
+    get_financial_notes, save_financial_note
+)
 
 # Set page configuration
 st.set_page_config(
@@ -28,6 +36,16 @@ st.markdown("---")
 if 'periods' not in st.session_state:
     st.session_state.periods = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
     st.session_state.years = [datetime.now().year - i for i in range(3)]
+    
+    # Dapatkan daftar perusahaan dari database
+    companies = get_companies()
+    if companies:
+        # Pilih perusahaan pertama secara default
+        st.session_state.selected_company_id = companies[0].id
+        st.session_state.selected_company_name = companies[0].name
+    else:
+        st.session_state.selected_company_id = None
+        st.session_state.selected_company_name = ""
     
     # Initialize with empty data
     st.session_state.revenue = {year: {month: 0 for month in st.session_state.periods} for year in st.session_state.years}
@@ -65,12 +83,110 @@ if 'periods' not in st.session_state:
     st.session_state.anomalies = ""
     st.session_state.funding_requirements = 0
     st.session_state.funding_allocation = ""
+    
+    # Load data from database if company is selected
+    if st.session_state.selected_company_id:
+        # Load financial data
+        for year in st.session_state.years:
+            financial_data = get_financial_data(st.session_state.selected_company_id, year)
+            for data in financial_data:
+                month = st.session_state.periods[data.month - 1]  # Convert month number to name
+                st.session_state.revenue[year][month] = data.revenue
+                st.session_state.cogs[year][month] = data.cogs
+                st.session_state.op_expenses[year][month] = data.operational_expenses
+                st.session_state.other_expenses[year][month] = data.other_expenses
+                st.session_state.tax_rate = data.tax_rate
+        
+        # Load balance sheet data
+        for year in st.session_state.years:
+            balance_sheets = get_balance_sheet(st.session_state.selected_company_id, year)
+            if balance_sheets:
+                balance_sheet = balance_sheets[0]  # Get the first one for the year
+                st.session_state.current_assets[year] = balance_sheet.current_assets
+                st.session_state.fixed_assets[year] = balance_sheet.fixed_assets
+                st.session_state.short_term_liabilities[year] = balance_sheet.short_term_liabilities
+                st.session_state.long_term_liabilities[year] = balance_sheet.long_term_liabilities
+                st.session_state.owner_equity[year] = balance_sheet.owner_equity
+                st.session_state.retained_earnings[year] = balance_sheet.retained_earnings
+        
+        # Load cash flow data
+        for year in st.session_state.years:
+            cash_flows = get_cash_flow(st.session_state.selected_company_id, year)
+            for data in cash_flows:
+                month = st.session_state.periods[data.month - 1]  # Convert month number to name
+                st.session_state.op_cash_flow[year][month] = data.operational_cash_flow
+                st.session_state.inv_cash_flow[year][month] = data.investment_cash_flow
+                st.session_state.fin_cash_flow[year][month] = data.financing_cash_flow
+        
+        # Load KPI data
+        for year in st.session_state.years:
+            kpis = get_kpis(st.session_state.selected_company_id, year)
+            if kpis:
+                kpi = kpis[0]  # Get the first one for the year
+                st.session_state.cac[year] = kpi.cac
+                st.session_state.ltv[year] = kpi.ltv
+                st.session_state.burn_rate[year] = kpi.burn_rate
+                st.session_state.revenue_growth = kpi.revenue_growth
+                st.session_state.expense_growth = kpi.expense_growth
+                st.session_state.projection_years = kpi.projection_years
+        
+        # Load financial notes
+        for year in st.session_state.years:
+            notes = get_financial_notes(st.session_state.selected_company_id, year)
+            if notes and year == st.session_state.years[0]:  # Use only current year notes
+                note = notes[0]
+                st.session_state.growth_strategy = note.growth_strategy or ""
+                st.session_state.business_risks = note.business_risks or ""
+                st.session_state.anomalies = note.anomalies or ""
+                st.session_state.funding_requirements = note.funding_requirements or 0
+                st.session_state.funding_allocation = note.funding_allocation or ""
 
 # Sidebar for report configuration
 with st.sidebar:
     st.header("Konfigurasi Laporan")
-    report_title = st.text_input("Judul Laporan", "Laporan Keuangan")
     
+    # Perusahaan Selection
+    st.subheader("Pilih Perusahaan")
+    
+    # Dapatkan daftar perusahaan dari database
+    companies = get_companies()
+    company_names = [company.name for company in companies]
+    company_ids = [company.id for company in companies]
+    
+    # Tambahkan opsi untuk membuat perusahaan baru
+    company_names.append("+ Tambah Perusahaan Baru")
+    
+    selected_company_index = st.selectbox(
+        "Perusahaan", 
+        range(len(company_names)), 
+        format_func=lambda x: company_names[x]
+    )
+    
+    # Jika user memilih untuk menambah perusahaan baru
+    if selected_company_index == len(company_names) - 1:
+        with st.form("new_company_form"):
+            new_company_name = st.text_input("Nama Perusahaan")
+            new_company_industry = st.text_input("Industri")
+            new_company_founded = st.date_input("Tanggal Didirikan")
+            
+            submit_button = st.form_submit_button("Tambah Perusahaan")
+            
+            if submit_button and new_company_name:
+                new_company_id = create_company(new_company_name, new_company_industry, new_company_founded)
+                st.session_state.selected_company_id = new_company_id
+                st.session_state.selected_company_name = new_company_name
+                st.success(f"Perusahaan {new_company_name} berhasil dibuat!")
+                st.rerun()
+    else:
+        # Jika ada perusahaan, update selected_company_id di session_state
+        if companies:
+            st.session_state.selected_company_id = company_ids[selected_company_index]
+            st.session_state.selected_company_name = company_names[selected_company_index]
+    
+    # Judul Laporan
+    report_title = st.text_input("Judul Laporan", f"Laporan Keuangan - {st.session_state.selected_company_name}")
+    
+    # Pilih Periode
     st.subheader("Pilih Periode")
     period_type = st.selectbox("Jenis Periode", ["Bulanan", "Triwulanan", "Tahunan"])
     selected_year = st.selectbox("Pilih Tahun", st.session_state.years)
@@ -86,6 +202,74 @@ with st.sidebar:
         periods = [str(year) for year in st.session_state.years]
     
     selected_period = st.selectbox("Pilih Periode", periods)
+    
+    # Tombol Simpan Data ke Database
+    if st.button("Simpan Data ke Database"):
+        if st.session_state.selected_company_id:
+            # Simpan data finansial untuk setiap bulan/tahun
+            for year in st.session_state.years:
+                for i, month in enumerate(st.session_state.periods):
+                    save_financial_data(
+                        st.session_state.selected_company_id,
+                        year,
+                        i + 1,  # Konversi nama bulan ke angka
+                        st.session_state.revenue[year][month],
+                        st.session_state.cogs[year][month],
+                        st.session_state.op_expenses[year][month],
+                        st.session_state.other_expenses[year][month],
+                        st.session_state.tax_rate
+                    )
+                
+                # Simpan balance sheet untuk setiap tahun
+                save_balance_sheet(
+                    st.session_state.selected_company_id,
+                    year,
+                    st.session_state.current_assets[year],
+                    st.session_state.fixed_assets[year],
+                    st.session_state.short_term_liabilities[year],
+                    st.session_state.long_term_liabilities[year],
+                    st.session_state.owner_equity[year],
+                    st.session_state.retained_earnings[year]
+                )
+                
+                # Simpan cash flow untuk setiap bulan/tahun
+                for i, month in enumerate(st.session_state.periods):
+                    save_cash_flow(
+                        st.session_state.selected_company_id,
+                        year,
+                        i + 1,  # Konversi nama bulan ke angka
+                        st.session_state.op_cash_flow[year][month],
+                        st.session_state.inv_cash_flow[year][month],
+                        st.session_state.fin_cash_flow[year][month]
+                    )
+                
+                # Simpan KPI untuk setiap tahun
+                save_kpi(
+                    st.session_state.selected_company_id,
+                    year,
+                    st.session_state.cac[year],
+                    st.session_state.ltv[year],
+                    st.session_state.burn_rate[year],
+                    st.session_state.revenue_growth,
+                    st.session_state.expense_growth,
+                    st.session_state.projection_years
+                )
+            
+            # Simpan financial notes untuk tahun saat ini
+            current_year = st.session_state.years[0]
+            save_financial_note(
+                st.session_state.selected_company_id,
+                current_year,
+                st.session_state.growth_strategy,
+                st.session_state.business_risks,
+                st.session_state.anomalies,
+                st.session_state.funding_requirements,
+                st.session_state.funding_allocation
+            )
+            
+            st.success("Data berhasil disimpan ke database!")
+        else:
+            st.error("Silakan pilih atau buat perusahaan terlebih dahulu.")
 
 # Main content area
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
