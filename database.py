@@ -369,97 +369,19 @@ def get_financial_notes(company_id, year=None):
     
     return query.all()
 
-# Cek apakah sudah ada perusahaan di database, jika tidak buat perusahaan default
+# Inisialisasi database tanpa data dummy
 def init_db_with_default_data():
     db = get_db_session()
     
     # Cek apakah ada perusahaan
     companies = db.query(Company).all()
     
-    if not companies:
-        # Buat perusahaan default
-        default_company = Company(
-            name="PT Contoh Indonesia",
-            industry="Teknologi",
-            founded_date=datetime.date(2020, 1, 1)
-        )
-        
-        db.add(default_company)
-        db.commit()
-        db.refresh(default_company)
-        
-        # Tambahkan beberapa data default
-        current_year = datetime.datetime.now().year
-        
-        # Tambahkan data finansial untuk 12 bulan tahun ini
-        for month in range(1, 13):
-            new_data = FinancialData(
-                company_id=default_company.id,
-                year=current_year,
-                month=month,
-                revenue=1000000 * month,  # Hanya contoh data
-                cogs=400000 * month,
-                operational_expenses=200000 * month,
-                other_expenses=50000 * month,
-                tax_rate=0.2
-            )
-            db.add(new_data)
-            
-            # Tambahkan data arus kas untuk 12 bulan
-            new_cash_flow = CashFlow(
-                company_id=default_company.id,
-                year=current_year,
-                month=month,
-                operational_cash_flow=300000 * month,
-                investment_cash_flow=-100000 * month,
-                financing_cash_flow=50000 * month
-            )
-            db.add(new_cash_flow)
-        
-        # Tambahkan balance sheet untuk tahun ini
-        new_balance_sheet = BalanceSheet(
-            company_id=default_company.id,
-            year=current_year,
-            current_assets=5000000,
-            fixed_assets=10000000,
-            short_term_liabilities=2000000,
-            long_term_liabilities=5000000,
-            owner_equity=6000000,
-            retained_earnings=2000000
-        )
-        db.add(new_balance_sheet)
-        
-        # Tambahkan KPI untuk tahun ini
-        new_kpi = KPI(
-            company_id=default_company.id,
-            year=current_year,
-            cac=500000,
-            ltv=2000000,
-            burn_rate=3000000,
-            revenue_growth=0.15,
-            expense_growth=0.1,
-            projection_years=3
-        )
-        db.add(new_kpi)
-        
-        # Tambahkan financial notes
-        new_note = FinancialNote(
-            company_id=default_company.id,
-            year=current_year,
-            growth_strategy="Mengembangkan produk baru dan ekspansi ke pasar Asia Tenggara",
-            business_risks="Risiko regulasi dan kompetisi dari pemain besar",
-            anomalies="Pertumbuhan pendapatan Q3 melambat karena pandemi",
-            funding_requirements=10000000,
-            funding_allocation="Pengembangan produk (40%), Pemasaran (30%), Operasional (20%), Cadangan (10%)"
-        )
-        db.add(new_note)
-        
-        db.commit()
-        
-        print(f"Database diinisialisasi dengan perusahaan default: {default_company.name}")
-        return default_company.id
+    # Tidak perlu membuat data default, cukup kembalikan ID perusahaan jika ada
+    if companies:
+        return companies[0].id
     
-    return companies[0].id
+    # Jika tidak ada perusahaan, kembalikan None
+    return None
 
 # Jalankan inisialisasi database
 default_company_id = init_db_with_default_data()

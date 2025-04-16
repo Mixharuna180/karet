@@ -38,12 +38,18 @@ if 'periods' not in st.session_state:
     st.session_state.years = [datetime.now().year - i for i in range(3)]
     
     # Dapatkan daftar perusahaan dari database
-    companies = get_companies()
-    if companies:
-        # Pilih perusahaan pertama secara default
-        st.session_state.selected_company_id = companies[0].id
-        st.session_state.selected_company_name = companies[0].name
-    else:
+    try:
+        companies = get_companies()
+        if companies:
+            # Pilih perusahaan pertama secara default
+            st.session_state.selected_company_id = companies[0].id
+            st.session_state.selected_company_name = companies[0].name
+        else:
+            st.session_state.selected_company_id = None
+            st.session_state.selected_company_name = ""
+    except Exception as e:
+        st.error(f"Terjadi kesalahan saat mengambil data perusahaan: {e}")
+        companies = []
         st.session_state.selected_company_id = None
         st.session_state.selected_company_name = ""
     
@@ -149,9 +155,15 @@ with st.sidebar:
     st.subheader("Pilih Perusahaan")
     
     # Dapatkan daftar perusahaan dari database
-    companies = get_companies()
-    company_names = [company.name for company in companies]
-    company_ids = [company.id for company in companies]
+    try:
+        companies = get_companies()
+        company_names = [company.name for company in companies]
+        company_ids = [company.id for company in companies]
+    except Exception as e:
+        st.error(f"Terjadi kesalahan saat mengambil data perusahaan: {e}")
+        companies = []
+        company_names = []
+        company_ids = []
     
     # Tambahkan opsi untuk membuat perusahaan baru
     company_names.append("+ Tambah Perusahaan Baru")
