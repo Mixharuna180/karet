@@ -209,6 +209,7 @@ with tab1:
         
         df_penjualan = pd.DataFrame([
             {
+                "ID": p.id,
                 "Tanggal": p.tanggal,
                 "Jarak (km)": p.jarak,
                 "Harga Jual (Rp/kg)": p.harga_jual,
@@ -224,7 +225,34 @@ with tab1:
             } for p in penjualan_data
         ])
         
-        st.dataframe(df_penjualan, use_container_width=True)
+        # Tampilkan tabel tanpa kolom ID
+        st.dataframe(df_penjualan.drop(columns=["ID"]), use_container_width=True)
+        
+        # Fitur edit dan hapus data penjualan karet
+        if st.session_state.is_authenticated:
+            st.subheader("Edit/Hapus Data Penjualan Karet")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                # Pilih data untuk diedit/hapus
+                selected_penjualan_id = st.selectbox(
+                    "Pilih data untuk diedit/hapus", 
+                    df_penjualan["ID"].tolist(),
+                    format_func=lambda x: f"Tanggal: {df_penjualan[df_penjualan['ID']==x]['Tanggal'].values[0]} - Jarak: {df_penjualan[df_penjualan['ID']==x]['Jarak (km)'].values[0]} km"
+                )
+                
+                # Tampilkan tombol hapus
+                if st.button("🗑️ Hapus Data Penjualan", key="delete_penjualan_button", help="Hapus data penjualan karet yang dipilih"):
+                    try:
+                        hapus_penjualan_karet(selected_penjualan_id, st.session_state.selected_perusahaan_id)
+                        st.success(f"Data penjualan karet berhasil dihapus!")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Terjadi kesalahan saat menghapus data: {e}")
+            
+            # TODO: Tambahkan fitur untuk mengedit data penjualan karet di versi berikutnya
+            # Karena banyak field, untuk saat ini pengguna bisa menghapus data dan membuat yang baru
         
         # Create table for recommendations
         st.subheader("Rekomendasi")
@@ -362,6 +390,9 @@ with tab3:
     
     # Display form to add new data
     with st.expander("Tambah Realisasi Anggaran", expanded=True):
+        if not st.session_state.is_authenticated:
+            st.warning("Silakan login sebagai admin di sidebar untuk menambah atau mengedit data")
+            
         with st.form("realisasi_anggaran_form"):
             col1, col2 = st.columns(2)
             
@@ -441,14 +472,17 @@ with tab3:
                 format_func=lambda x: f"No. {df_anggaran[df_anggaran['ID']==x]['No'].values[0]} - {df_anggaran[df_anggaran['ID']==x]['Tanggal'].values[0]} - {df_anggaran[df_anggaran['ID']==x]['Keterangan'].values[0]}"
             )
             
-            # Tampilkan tombol hapus
-            if st.button("🗑️ Hapus Data", key="delete_button", help="Hapus data realisasi anggaran yang dipilih"):
-                try:
-                    hapus_realisasi_anggaran(selected_data_id, st.session_state.selected_perusahaan_id)
-                    st.success(f"Data berhasil dihapus!")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Terjadi kesalahan saat menghapus data: {e}")
+            # Tampilkan tombol hapus jika terotentikasi
+            if st.session_state.is_authenticated:
+                if st.button("🗑️ Hapus Data", key="delete_button", help="Hapus data realisasi anggaran yang dipilih"):
+                    try:
+                        hapus_realisasi_anggaran(selected_data_id, st.session_state.selected_perusahaan_id)
+                        st.success(f"Data berhasil dihapus!")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Terjadi kesalahan saat menghapus data: {e}")
+            else:
+                st.warning("Silakan login sebagai admin di sidebar untuk menghapus data")
         
         with col2:
             # Ambil data yang dipilih untuk diedit
@@ -527,14 +561,17 @@ with tab3:
         # Summary section
         st.subheader("Kesimpulan Realisasi Anggaran")
         
-        # Tambahkan tombol untuk memperbaiki saldo jika diperlukan
-        if st.button("Perbaiki Semua Saldo"):
-            try:
-                fix_all_realisasi_anggaran_saldo()
-                st.success("Semua saldo telah diperbaiki. Halaman akan dimuat ulang.")
-                st.rerun()
-            except Exception as e:
-                st.error(f"Terjadi kesalahan saat memperbaiki saldo: {e}")
+        # Tambahkan tombol untuk memperbaiki saldo jika diperlukan (hanya untuk admin)
+        if st.session_state.is_authenticated:
+            if st.button("Perbaiki Semua Saldo"):
+                try:
+                    fix_all_realisasi_anggaran_saldo()
+                    st.success("Semua saldo telah diperbaiki. Halaman akan dimuat ulang.")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Terjadi kesalahan saat memperbaiki saldo: {e}")
+        else:
+            st.info("Login sebagai admin untuk mengakses fitur perbaikan saldo")
         
         total_debet = sum(a.debet for a in anggaran_data)
         total_kredit = sum(a.kredit for a in anggaran_data)
