@@ -479,7 +479,7 @@ def init_db_with_karet_data():
                 tanggal=datetime.date(2025, 2, 9),
                 debet=10000000,
                 kredit=0,
-                saldo=10141000,
+                saldo=10141000,  # Saldo yang sudah benar: 141000 + 10000000 = 10141000
                 volume="1 Lot",
                 keterangan="Kredit KAS"
             )
@@ -493,9 +493,40 @@ def init_db_with_karet_data():
     
     return companies[0].id
 
+# Fungsi untuk memperbaiki saldo pada seluruh data realisasi anggaran
+def fix_all_realisasi_anggaran_saldo():
+    """
+    Memperbaiki semua saldo pada realisasi anggaran untuk memastikan
+    kalkulasi berjalan dengan benar
+    """
+    db = get_db_session()
+    
+    # Dapatkan semua perusahaan
+    companies = db.query(Perusahaan).all()
+    
+    for company in companies:
+        # Dapatkan semua transaksi untuk perusahaan ini
+        transactions = db.query(RealisasiAnggaran).filter(
+            RealisasiAnggaran.perusahaan_id == company.id
+        ).order_by(RealisasiAnggaran.tanggal).all()
+        
+        # Rekalkukasi saldo untuk setiap transaksi
+        running_saldo = 0
+        for tx in transactions:
+            running_saldo = running_saldo + tx.debet - tx.kredit
+            if tx.saldo != running_saldo:
+                tx.saldo = running_saldo
+                print(f"Memperbaiki saldo untuk transaksi {tx.id}: {tx.keterangan}, tanggal {tx.tanggal}")
+    
+    # Simpan perubahan
+    db.commit()
+    print("Proses perbaikan saldo selesai.")
+
 # Jalankan inisialisasi database
 try:
     default_perusahaan_id = init_db_with_karet_data()
+    # Jalankan juga perbaikan saldo
+    fix_all_realisasi_anggaran_saldo()
 except Exception as e:
     print(f"Error saat inisialisasi database: {e}")
     default_perusahaan_id = None

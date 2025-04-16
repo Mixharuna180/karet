@@ -10,7 +10,8 @@ from database import (
     get_perusahaan, get_perusahaan_by_id, tambah_perusahaan,
     get_penjualan_karet, simpan_penjualan_karet,
     get_strategi_risiko, simpan_strategi_risiko,
-    get_realisasi_anggaran, simpan_realisasi_anggaran
+    get_realisasi_anggaran, simpan_realisasi_anggaran,
+    fix_all_realisasi_anggaran_saldo
 )
 from pdf_generator import generate_pdf_penjualan_karet
 
@@ -426,6 +427,15 @@ with tab3:
         
         # Summary section
         st.subheader("Kesimpulan Realisasi Anggaran")
+        
+        # Tambahkan tombol untuk memperbaiki saldo jika diperlukan
+        if st.button("Perbaiki Semua Saldo"):
+            try:
+                fix_all_realisasi_anggaran_saldo()
+                st.success("Semua saldo telah diperbaiki. Halaman akan dimuat ulang.")
+                st.rerun()
+            except Exception as e:
+                st.error(f"Terjadi kesalahan saat memperbaiki saldo: {e}")
         
         total_debet = sum(a.debet for a in anggaran_data)
         total_kredit = sum(a.kredit for a in anggaran_data)
