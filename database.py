@@ -8,8 +8,19 @@ import datetime
 # Dapatkan connection string database dari environment variable
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
-# Buat engine untuk koneksi ke database
-engine = create_engine(DATABASE_URL)
+# Buat engine untuk koneksi ke database dengan parameter koneksi untuk menangani SSL issue
+engine = create_engine(
+    DATABASE_URL,
+    pool_pre_ping=True,
+    pool_recycle=3600,
+    connect_args={
+        'connect_timeout': 30,
+        'keepalives': 1,
+        'keepalives_idle': 30,
+        'keepalives_interval': 10,
+        'keepalives_count': 5
+    }
+)
 
 # Buat base class untuk model SQLAlchemy
 Base = declarative_base()
@@ -113,13 +124,20 @@ Base.metadata.create_all(engine)
 # Buat sessionmaker
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Function untuk mendapatkan session database
+# Function untuk mendapatkan session database dengan penanganan error
 def get_db_session():
     db = SessionLocal()
     try:
+        # Test koneksi dengan melakukan query sederhana
+        db.execute(text("SELECT 1"))
         return db
-    finally:
+    except Exception as e:
         db.close()
+        print(f"Error saat koneksi ke database: {e}")
+        raise
+    finally:
+        # db.close() dipanggil di fungsi yang menggunakan get_db_session
+        pass
 
 # Function untuk menyimpan data ke database
 def save_financial_data(company_id, year, month, revenue, cogs, op_expenses, other_expenses, tax_rate=0.2):
