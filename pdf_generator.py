@@ -710,6 +710,108 @@ def generate_pdf_penjualan_karet(data, title="Laporan Penjualan Karet"):
             content.append(Paragraph("(Terjadi kesalahan saat membuat visualisasi distribusi pengeluaran)", normal_style))
             content.append(Spacer(1, 12))
     
+    # Harga SICOM x SIR 20
+    if 'harga_sicom_sir' in data:
+        content.append(Paragraph("Harga SICOM x SIR 20", header_style))
+        
+        # Buat tabel untuk harga tertinggi
+        if 'harga_tertinggi' in data['harga_sicom_sir'] and data['harga_sicom_sir']['harga_tertinggi']:
+            content.append(Paragraph("Harga Perbandingan Tertinggi", subtitle_style))
+            
+            tertinggi_header = ['No', 'Tanggal', 'Harga Rupiah', 'Harga Rp/100', 'Harga SIR SGD', 'Harga SIR (Rp)']
+            tertinggi_data = [tertinggi_header]
+            
+            for i, h in enumerate(data['harga_sicom_sir']['harga_tertinggi']):
+                tertinggi_data.append([
+                    str(i+1),
+                    h.get('tanggal', ''),
+                    h.get('harga_rupiah', ''),
+                    h.get('harga_rupiah_100', ''),
+                    h.get('harga_sir_sgd', ''),
+                    h.get('harga_sir_rupiah', '')
+                ])
+            
+            col_widths = [doc.width * w for w in [0.05, 0.15, 0.2, 0.2, 0.2, 0.2]]
+            tertinggi_table = Table(tertinggi_data, colWidths=col_widths)
+            tertinggi_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+                ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('ALIGN', (2, 1), (-1, -1), 'RIGHT')
+            ]))
+            
+            content.append(tertinggi_table)
+            content.append(Spacer(1, 12))
+        
+        # Buat tabel untuk harga terendah
+        if 'harga_terendah' in data['harga_sicom_sir'] and data['harga_sicom_sir']['harga_terendah']:
+            content.append(Paragraph("Harga Perbandingan Terendah", subtitle_style))
+            
+            terendah_header = ['No', 'Tanggal', 'Harga Rupiah', 'Harga Rp/100', 'Harga SIR SGD', 'Harga SIR (Rp)']
+            terendah_data = [terendah_header]
+            
+            for i, h in enumerate(data['harga_sicom_sir']['harga_terendah']):
+                terendah_data.append([
+                    str(i+1),
+                    h.get('tanggal', ''),
+                    h.get('harga_rupiah', ''),
+                    h.get('harga_rupiah_100', ''),
+                    h.get('harga_sir_sgd', ''),
+                    h.get('harga_sir_rupiah', '')
+                ])
+            
+            col_widths = [doc.width * w for w in [0.05, 0.15, 0.2, 0.2, 0.2, 0.2]]
+            terendah_table = Table(terendah_data, colWidths=col_widths)
+            terendah_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+                ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('ALIGN', (2, 1), (-1, -1), 'RIGHT')
+            ]))
+            
+            content.append(terendah_table)
+            content.append(Spacer(1, 12))
+        
+        # Tambahkan grafik perbandingan jika kedua data tersedia
+        if ('harga_tertinggi' in data['harga_sicom_sir'] and data['harga_sicom_sir']['harga_tertinggi'] and
+            'harga_terendah' in data['harga_sicom_sir'] and data['harga_sicom_sir']['harga_terendah']):
+            # Buat grafik perbandingan
+            comparison_chart = create_price_comparison_chart(
+                data['harga_sicom_sir']['harga_tertinggi'],
+                data['harga_sicom_sir']['harga_terendah']
+            )
+            
+            if comparison_chart:
+                content.append(Paragraph("Grafik Perbandingan Harga", subtitle_style))
+                content.append(comparison_chart)
+                content.append(Spacer(1, 12))
+                
+                # Tambahkan kesimpulan
+                avg_tertinggi = sum([parse_currency_id(h.get('harga_sir_rupiah', 0)) for h in data['harga_sicom_sir']['harga_tertinggi']]) / len(data['harga_sicom_sir']['harga_tertinggi']) if data['harga_sicom_sir']['harga_tertinggi'] else 0
+                avg_terendah = sum([parse_currency_id(h.get('harga_sir_rupiah', 0)) for h in data['harga_sicom_sir']['harga_terendah']]) / len(data['harga_sicom_sir']['harga_terendah']) if data['harga_sicom_sir']['harga_terendah'] else 0
+                selisih = avg_tertinggi - avg_terendah
+                persen_selisih = (selisih / avg_terendah) * 100 if avg_terendah > 0 else 0
+                
+                content.append(Paragraph("Analisis Perbandingan Harga", subtitle_style))
+                kesimpulan_text = f"""
+                Berdasarkan analisis data harga SICOM x SIR 20, dapat disimpulkan:
+                
+                1. Selisih rata-rata antara harga tertinggi dan terendah adalah {format_currency(selisih)} atau sekitar {persen_selisih:.2f}%.
+                2. Secara historis, terdapat fluktuasi signifikan pada harga SIR 20 yang dapat menjadi pertimbangan dalam strategi jual-beli.
+                3. Penting untuk memperhatikan tren harga berdasarkan bulan untuk menentukan waktu optimal dalam transaksi.
+                """
+                content.append(Paragraph(kesimpulan_text, normal_style))
+        
+        content.append(Spacer(1, 24))
+    
     # Kesimpulan & Rekomendasi
     if 'kesimpulan' in data and data['kesimpulan']:
         content.append(Paragraph("Kesimpulan & Rekomendasi", header_style))
