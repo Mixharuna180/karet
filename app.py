@@ -464,7 +464,7 @@ with tab2:
         numeric_data = income_data.copy()
         for col in numeric_data.columns:
             if col != 'Period':
-                numeric_data[col] = numeric_data[col].str.replace('$', '').str.replace(',', '').astype(float)
+                numeric_data[col] = numeric_data[col].str.replace('Rp', '').str.replace(',', '').astype(float)
         
         fig = px.bar(numeric_data, x='Period', y=['Revenue', 'COGS', 'Operational Expenses', 'Other Expenses'], 
                     title='Revenue vs. Expenses')
@@ -664,7 +664,7 @@ with tab3:
     numeric_data = cash_flow_data.copy()
     for col in numeric_data.columns:
         if col != 'Period':
-            numeric_data[col] = numeric_data[col].str.replace('$', '').str.replace(',', '').astype(float)
+            numeric_data[col] = numeric_data[col].str.replace('Rp', '').str.replace(',', '').astype(float)
     
     fig = px.bar(numeric_data, x='Period', y=['Operational Cash Flow', 'Investment Cash Flow', 'Financing Cash Flow'], 
                 title='Cash Flow Components')
