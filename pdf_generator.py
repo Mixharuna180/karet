@@ -413,15 +413,15 @@ def generate_pdf_penjualan_karet(data, title="Laporan Penjualan Karet"):
             
             if letter_items:
                 # Format khusus untuk sub-item berhuruf
-                for mark, content in letter_items:
-                    risiko_formatted += f"<br/><b>{mark}</b>{content}<br/>"
+                for mark, item_text in letter_items:
+                    risiko_formatted += f"<br/><b>{mark}</b>{item_text}<br/>"
                 
                 # Bersihkan tag berulang
                 risiko_formatted = risiko_formatted.replace("<br/><br/>", "<br/>")
             elif number_items:
                 # Format untuk item bernomor - dengan spasi yang jelas
-                for mark, content in number_items:
-                    risiko_formatted += f"<b>{mark}</b>{content}<br/><br/>"
+                for mark, item_text in number_items:
+                    risiko_formatted += f"<b>{mark}</b>{item_text}<br/><br/>"
                 
                 # Bersihkan tag berulang
                 risiko_formatted = risiko_formatted.replace("<br/><br/><br/>", "<br/><br/>")
@@ -497,15 +497,15 @@ def generate_pdf_penjualan_karet(data, title="Laporan Penjualan Karet"):
             
             if letter_items:
                 # Format khusus untuk sub-item berhuruf
-                for mark, content in letter_items:
-                    solusi_formatted += f"<br/><b>{mark}</b>{content}<br/>"
+                for mark, item_text in letter_items:
+                    solusi_formatted += f"<br/><b>{mark}</b>{item_text}<br/>"
                 
                 # Bersihkan tag berulang
                 solusi_formatted = solusi_formatted.replace("<br/><br/>", "<br/>")
             elif number_items:
                 # Format untuk item bernomor
-                for mark, content in number_items:
-                    solusi_formatted += f"<b>{mark}</b>{content}<br/><br/>"
+                for mark, item_text in number_items:
+                    solusi_formatted += f"<b>{mark}</b>{item_text}<br/><br/>"
                 
                 # Bersihkan tag berulang
                 solusi_formatted = solusi_formatted.replace("<br/><br/><br/>", "<br/><br/>")
