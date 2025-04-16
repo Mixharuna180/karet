@@ -58,9 +58,23 @@ def create_cash_flow_chart(anggaran_data):
         dates.append(date_val)
         
         # Extract numeric values from formatted strings
-        debet_val = float(item.get('debet').replace('Rp', '').replace('.', '').replace(',', '.')) if isinstance(item.get('debet'), str) else item.get('debet')
-        kredit_val = float(item.get('kredit').replace('Rp', '').replace('.', '').replace(',', '.')) if isinstance(item.get('kredit'), str) else item.get('kredit')
-        saldo_val = float(item.get('saldo').replace('Rp', '').replace('.', '').replace(',', '.')) if isinstance(item.get('saldo'), str) else item.get('saldo')
+        if isinstance(item.get('debet'), str):
+            debet_str = item.get('debet').replace('Rp', '').replace(' ', '').replace('.', '').replace(',', '.')
+            debet_val = float(debet_str)
+        else:
+            debet_val = item.get('debet')
+            
+        if isinstance(item.get('kredit'), str):
+            kredit_str = item.get('kredit').replace('Rp', '').replace(' ', '').replace('.', '').replace(',', '.')
+            kredit_val = float(kredit_str)
+        else:
+            kredit_val = item.get('kredit')
+            
+        if isinstance(item.get('saldo'), str):
+            saldo_str = item.get('saldo').replace('Rp', '').replace(' ', '').replace('.', '').replace(',', '.')
+            saldo_val = float(saldo_str)
+        else:
+            saldo_val = item.get('saldo')
         
         debets.append(debet_val)
         kredits.append(kredit_val)
@@ -114,7 +128,11 @@ def create_distribution_chart(anggaran_data):
         keterangan = item.get('keterangan', 'Lainnya')
         
         # Extract numeric value from formatted string
-        kredit_val = float(item.get('kredit').replace('Rp', '').replace('.', '').replace(',', '.')) if isinstance(item.get('kredit'), str) else item.get('kredit')
+        if isinstance(item.get('kredit'), str):
+            kredit_str = item.get('kredit').replace('Rp', '').replace(' ', '').replace('.', '').replace(',', '.')
+            kredit_val = float(kredit_str)
+        else:
+            kredit_val = item.get('kredit')
         
         if kredit_val > 0:  # Only include expenses
             if keterangan in expense_data:

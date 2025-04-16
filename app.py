@@ -643,8 +643,18 @@ if st.button("Buat Laporan PDF"):
                 # Kesimpulan dari data
                 kesimpulan = ""
                 if penjualan_karet_data:
-                    max_profit = max(p["keuntungan_bersih"].replace("Rp", "").replace(".", "").replace(",", ".") for p in penjualan_karet_data)
-                    min_profit = min(p["keuntungan_bersih"].replace("Rp", "").replace(".", "").replace(",", ".") for p in penjualan_karet_data)
+                    # Ekstrak nilai keuntungan dengan cara yang lebih aman
+                    profits = []
+                    for p in penjualan_karet_data:
+                        profit_str = p["keuntungan_bersih"].replace("Rp", "").replace(" ", "").replace(".", "").replace(",", ".")
+                        try:
+                            profits.append(float(profit_str))
+                        except ValueError:
+                            pass
+                            
+                    if profits:
+                        max_profit = format_currency(max(profits))
+                        min_profit = format_currency(min(profits))
                     kesimpulan = f"""
                     Berdasarkan analisis data penjualan karet, berikut adalah beberapa kesimpulan utama:
                     • Profitabilitas tertinggi ditemukan pada penjualan dengan keuntungan bersih {max_profit}.
