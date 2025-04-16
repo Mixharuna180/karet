@@ -318,6 +318,48 @@ def get_realisasi_anggaran(perusahaan_id=None):
     # Mengembalikan hasil yang sudah diurutkan berdasarkan tanggal
     return query.order_by(RealisasiAnggaran.tanggal).all()
 
+def get_realisasi_anggaran_by_id(id):
+    """
+    Mendapatkan data realisasi anggaran berdasarkan ID
+    """
+    db = get_db_session()
+    return db.query(RealisasiAnggaran).filter(RealisasiAnggaran.id == id).first()
+
+def hapus_realisasi_anggaran(id, perusahaan_id):
+    """
+    Menghapus data realisasi anggaran berdasarkan ID
+    dan memperbarui saldo untuk entri berikutnya
+    """
+    db = get_db_session()
+    
+    # Cari data yang akan dihapus
+    data_to_delete = db.query(RealisasiAnggaran).filter(RealisasiAnggaran.id == id).first()
+    
+    if not data_to_delete:
+        raise Exception("Data tidak ditemukan")
+    
+    # Dapatkan tanggal data yang akan dihapus untuk memperbarui entri berikutnya
+    tanggal = data_to_delete.tanggal
+    
+    # Hapus data
+    db.delete(data_to_delete)
+    db.commit()
+    
+    # Perbarui saldo untuk semua transaksi setelah tanggal ini
+    transactions = db.query(RealisasiAnggaran).filter(
+        RealisasiAnggaran.perusahaan_id == perusahaan_id,
+    ).order_by(RealisasiAnggaran.tanggal).all()
+    
+    # Rekalkukasi semua saldo dari awal
+    running_saldo = 0
+    for tx in transactions:
+        running_saldo = running_saldo + tx.debet - tx.kredit
+        tx.saldo = running_saldo
+    
+    db.commit()
+    
+    return True
+
 # Inisialisasi database dengan data penjualan karet
 def init_db_with_karet_data():
     db = get_db_session()

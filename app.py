@@ -11,6 +11,7 @@ from database import (
     get_penjualan_karet, simpan_penjualan_karet,
     get_strategi_risiko, simpan_strategi_risiko,
     get_realisasi_anggaran, simpan_realisasi_anggaran,
+    get_realisasi_anggaran_by_id, hapus_realisasi_anggaran,
     fix_all_realisasi_anggaran_saldo
 )
 from pdf_generator import generate_pdf_penjualan_karet
@@ -374,8 +375,10 @@ with tab3:
         # Sort by date
         sorted_anggaran = sorted(anggaran_data, key=lambda x: x.tanggal)
         
+        # Tambahkan data ID untuk keperluan edit dan hapus
         df_anggaran = pd.DataFrame([
             {
+                "ID": a.id,
                 "No": i+1,
                 "Tanggal": a.tanggal,
                 "Debet (In)": a.debet,
@@ -386,7 +389,67 @@ with tab3:
             } for i, a in enumerate(sorted_anggaran)
         ])
         
-        st.dataframe(df_anggaran, use_container_width=True)
+        # Tampilkan tabel
+        st.dataframe(df_anggaran.drop(columns=["ID"]), use_container_width=True)
+        
+        # Fitur edit dan hapus data
+        st.subheader("Edit/Hapus Data Realisasi Anggaran")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Pilih data untuk diedit
+            selected_data_id = st.selectbox(
+                "Pilih data untuk diedit/hapus", 
+                df_anggaran["ID"].tolist(),
+                format_func=lambda x: f"No. {df_anggaran[df_anggaran['ID']==x]['No'].values[0]} - {df_anggaran[df_anggaran['ID']==x]['Tanggal'].values[0]} - {df_anggaran[df_anggaran['ID']==x]['Keterangan'].values[0]}"
+            )
+            
+            # Tampilkan tombol hapus
+            if st.button("🗑️ Hapus Data", key="delete_button", help="Hapus data realisasi anggaran yang dipilih"):
+                try:
+                    hapus_realisasi_anggaran(selected_data_id, st.session_state.selected_perusahaan_id)
+                    st.success(f"Data berhasil dihapus!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Terjadi kesalahan saat menghapus data: {e}")
+        
+        with col2:
+            # Ambil data yang dipilih untuk diedit
+            if selected_data_id:
+                selected_data = get_realisasi_anggaran_by_id(selected_data_id)
+                if selected_data:
+                    with st.form("edit_realisasi_anggaran_form"):
+                        st.subheader(f"Edit Data #{df_anggaran[df_anggaran['ID']==selected_data_id]['No'].values[0]}")
+                        
+                        edit_tanggal = st.date_input("Tanggal", value=selected_data.tanggal, key="edit_tanggal")
+                        edit_debet = st.number_input("Debet (In)", value=selected_data.debet, min_value=0.0, step=100000.0, key="edit_debet")
+                        edit_kredit = st.number_input("Kredit (Out)", value=selected_data.kredit, min_value=0.0, step=100000.0, key="edit_kredit")
+                        edit_volume = st.text_input("Volume", value=selected_data.volume, key="edit_volume")
+                        edit_keterangan = st.text_area("Keterangan", value=selected_data.keterangan, key="edit_keterangan")
+                        
+                        edit_submit = st.form_submit_button("Update Data")
+                        
+                        if edit_submit:
+                            try:
+                                # Hapus data lama
+                                hapus_realisasi_anggaran(selected_data_id, st.session_state.selected_perusahaan_id)
+                                
+                                # Buat data baru dengan nilai yang sudah diedit
+                                new_saldo = simpan_realisasi_anggaran(
+                                    st.session_state.selected_perusahaan_id,
+                                    edit_tanggal,
+                                    edit_debet,
+                                    edit_kredit,
+                                    0,  # Parameter saldo akan dikalkulasi otomatis
+                                    edit_volume,
+                                    edit_keterangan
+                                )
+                                
+                                st.success(f"Data berhasil diupdate! Saldo baru: {format_currency(new_saldo)}")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Terjadi kesalahan saat mengupdate data: {e}")
         
         # Visualizations
         st.subheader("Visualisasi")
