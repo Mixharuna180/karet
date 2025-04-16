@@ -238,6 +238,85 @@ def create_distribution_chart(anggaran_data):
     
     return None
 
+def create_price_comparison_chart(harga_tertinggi_data, harga_terendah_data):
+    """
+    Create a chart comparing highest and lowest prices for SICOM x SIR 20
+    
+    Args:
+        harga_tertinggi_data (list): List of dictionaries with highest price data
+        harga_terendah_data (list): List of dictionaries with lowest price data
+        
+    Returns:
+        Image: ReportLab Image object
+    """
+    try:
+        # Convert data to right format for plotting
+        df_tertinggi = pd.DataFrame([
+            {
+                "Tanggal": item.get('tanggal'),
+                "Harga SIR (Rp)": parse_currency_id(item.get('harga_sir_rupiah', 0)),
+                "Tipe": "Tertinggi",
+                "Tahun": item.get('tanggal').year if hasattr(item.get('tanggal'), 'year') else 2025
+            } for item in harga_tertinggi_data if item.get('tanggal')
+        ])
+        
+        df_terendah = pd.DataFrame([
+            {
+                "Tanggal": item.get('tanggal'),
+                "Harga SIR (Rp)": parse_currency_id(item.get('harga_sir_rupiah', 0)),
+                "Tipe": "Terendah",
+                "Tahun": item.get('tanggal').year if hasattr(item.get('tanggal'), 'year') else 2025
+            } for item in harga_terendah_data if item.get('tanggal')
+        ])
+        
+        # Combine data
+        df_combined = pd.concat([df_tertinggi, df_terendah])
+        
+        if not df_combined.empty:
+            plt.figure(figsize=(10, 6))
+            
+            # Create line chart
+            for tipe, group in df_combined.groupby('Tipe'):
+                color = 'green' if tipe == 'Tertinggi' else 'red'
+                plt.plot(group['Tanggal'], group['Harga SIR (Rp)'], marker='o', linestyle='-', label=tipe, color=color)
+            
+            plt.title('Perbandingan Harga SIR 20 Tertinggi vs Terendah')
+            plt.xlabel('Tanggal')
+            plt.ylabel('Harga SIR (Rp)')
+            plt.grid(True, linestyle='--', alpha=0.7)
+            plt.legend()
+            plt.xticks(rotation=45)
+            plt.tight_layout()
+            
+            # Calculate average values for annotation
+            avg_tertinggi = df_tertinggi['Harga SIR (Rp)'].mean() if not df_tertinggi.empty else 0
+            avg_terendah = df_terendah['Harga SIR (Rp)'].mean() if not df_terendah.empty else 0
+            selisih = avg_tertinggi - avg_terendah
+            persen_selisih = (selisih / avg_terendah) * 100 if avg_terendah > 0 else 0
+            
+            # Add annotation box
+            textstr = f"Rata-rata Tertinggi: {format_currency(avg_tertinggi)}\n"
+            textstr += f"Rata-rata Terendah: {format_currency(avg_terendah)}\n"
+            textstr += f"Selisih: {format_currency(selisih)} ({persen_selisih:.1f}%)"
+            
+            props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+            plt.annotate(textstr, xy=(0.05, 0.95), xycoords='axes fraction', 
+                        bbox=props, verticalalignment='top')
+            
+            # Save to BytesIO
+            img_data = BytesIO()
+            plt.savefig(img_data, format='png', dpi=150)
+            img_data.seek(0)
+            plt.close()
+            
+            # Return as ReportLab Image
+            return Image(img_data, width=500, height=300)
+            
+    except Exception as e:
+        print(f"Error creating price comparison chart: {e}")
+    
+    return None
+
 def generate_pdf_penjualan_karet(data, title="Laporan Penjualan Karet"):
     """
     Generate a PDF report for penjualan karet.
