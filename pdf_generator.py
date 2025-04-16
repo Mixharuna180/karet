@@ -29,48 +29,70 @@ def wrap_text(text, max_width=40, add_spacing=False):
     if not isinstance(text, str):
         text = str(text)
     
-    if add_spacing:
-        import re
-        
-        # Pertama, bersihkan teks dari "\n" yang mungkin sudah ada
-        text = text.replace('\n', ' ')
-        
-        # 1. Mencari pola angka diikuti titik (contoh: "1.", "2.")
-        # Tambahkan 2 baris baru sebelum item bernomor (kecuali yang pertama)
-        text = re.sub(r'(?<!^)\s*(\d+\.)', r'\n\n\1', text)
-        
-        # 2. Mencari pola huruf diikuti titik yang mengindikasikan sub-item (contoh: "a.", "b.")
-        # Tambahkan baris baru sebelum sub-item, dan pastikan ada spasi setelahnya
-        text = re.sub(r'\s*([a-z]\.)\s*', r'\n\1 ', text)
-        
-        # 3. Deteksi pola akhir kalimat (titik diikuti spasi dan huruf besar) untuk
-        # membuat paragraf baru pada awal kalimat baru dalam item yang sama
-        text = re.sub(r'(\.)(\s+)([A-Z])', r'\1\n\3', text)
+    import re
     
-    # Wrap text to fit column width
-    # Pertama kita pecah berdasarkan baris kosong
-    paragraphs = re.split(r'\n\s*\n', text) if add_spacing else [text]
+    # Jika format spasi tambahan diminta, kita ubah teks dengan XML markup untuk ReportLab
+    if add_spacing:
+        # Bersihkan teks dari newline yang mungkin sudah ada
+        text = re.sub(r'\s+', ' ', text)
+        
+        # Deteksi pola item bernomor dan sub-item
+        
+        # 1. Temukan semua angka diikuti titik (misal: "1.", "2.")
+        numbered_items = re.findall(r'(\d+\.\s+[^0-9]+?)(?=\d+\.\s+|$)', text)
+        
+        # Format khusus untuk ReportLab
+        new_text = ""
+        
+        # Jika ada format penomoran, lakukan formatting khusus
+        if numbered_items:
+            # Format setiap item bernomor
+            for item in numbered_items:
+                # Pisahkan nomor dan teks setelahnya
+                parts = re.match(r'(\d+\.\s+)(.*)', item)
+                if parts:
+                    item_num = parts.group(1)
+                    item_text = parts.group(2)
+                    
+                    # Cari sub-item dengan huruf (a., b., dst)
+                    sub_items = re.findall(r'([a-z]\.\s+[^a-z\.]+?)(?=[a-z]\.\s+|$)', item_text)
+                    
+                    if sub_items:
+                        # Jika ada sub-item, format dengan paragraf terpisah
+                        formatted_sub_items = []
+                        for sub_item in sub_items:
+                            sub_parts = re.match(r'([a-z]\.\s+)(.*)', sub_item)
+                            if sub_parts:
+                                sub_num = sub_parts.group(1)
+                                sub_text = sub_parts.group(2)
+                                formatted_sub_items.append(f"<br/><br/>{sub_num}{sub_text}")
+                        
+                        # Gabungkan dengan item utama
+                        new_text += f"<para>{item_num}{' '.join(formatted_sub_items)}</para><br/>"
+                    else:
+                        # Jika tidak ada sub-item, tambahkan secara normal
+                        new_text += f"<para>{item}</para><br/>"
+            
+            # Gunakan teks yang sudah diformat
+            text = new_text if new_text else text
+        
+        # Jika tidak ditemukan format penomoran, coba format berdasarkan pola lain
+        if not numbered_items:
+            # Tambahkan spasi antara paragraf biasa
+            text = re.sub(r'(\.\s+)([A-Z])', r'.\n\n\2', text)
+    
+    # Untuk teks dengan format XML
+    if '<para>' in text or '<br/>' in text:
+        return text
+    
+    # Untuk teks biasa, lakukan wrapping seperti biasa
+    paragraphs = text.split('\n\n')
     wrapped_paragraphs = []
     
     for p in paragraphs:
-        # Pecah paragraf berdasarkan baris
-        lines = p.split('\n')
-        wrapped_lines = []
-        
-        for line in lines:
-            line = line.strip()
-            if line:
-                # Gunakan textwrap untuk memastikan lebar teks sesuai
-                wrapped = textwrap.wrap(line, width=max_width)
-                if wrapped:
-                    wrapped_lines.append('\n'.join(wrapped))
-        
-        if wrapped_lines:
-            # Jika ini adalah item bernomor, pastikan formatnya konsisten
-            wrapped_paragraph = '\n'.join(wrapped_lines)
-            wrapped_paragraphs.append(wrapped_paragraph)
+        wrapped = textwrap.fill(p, width=max_width)
+        wrapped_paragraphs.append(wrapped)
     
-    # Gabungkan semua dengan spasi yang jelas antar paragraf
     return '\n\n'.join(wrapped_paragraphs)
 
 def parse_currency_id(currency_str):
@@ -358,13 +380,160 @@ def generate_pdf_penjualan_karet(data, title="Laporan Penjualan Karet"):
         strategi_header = ['No', 'Aspek', 'Risiko', 'Solusi']
         strategi_data = [strategi_header]
         
+        # Custom style untuk paragraf dengan spasi
+        numbered_style = ParagraphStyle(
+            'NumberedStyle',
+            parent=normal_style,
+            firstLineIndent=0,
+            leftIndent=0,
+            spaceBefore=5,
+            spaceAfter=5,
+            leading=14  # Meningkatkan spasi antar baris
+        )
+        
         for i, s in enumerate(data['strategi_risiko']):
-            # Wrap the text in each column with added spacing for better readability
+            # Format teks aspek secara normal
             aspek_text = Paragraph(wrap_text(s.get('aspek', ''), max_width=30), normal_style)
-            # Tambahkan spasi khusus untuk kolom risiko karena sering berisi numbering dan sub-paragraf
-            risiko_text = Paragraph(wrap_text(s.get('risiko', ''), max_width=35, add_spacing=True), normal_style)
-            # Tambahkan spasi khusus untuk kolom solusi juga
-            solusi_text = Paragraph(wrap_text(s.get('solusi', ''), max_width=50, add_spacing=True), normal_style)
+            
+            # Format teks risiko dengan struktur paragraf bernomor
+            risiko_raw = s.get('risiko', '')
+            risiko_formatted = ""
+            
+            # Impor modul re untuk regex
+            import re
+            
+            # Coba format berdasarkan struktur yang lebih umum
+            # Pertama coba cari apakah ada pola huruf+titik (a., b., etc) yang umum di sub-item
+            letter_pattern = re.compile(r'([a-z]\.\s+)([^a-z\.]+?)(?=[a-z]\.\s+|$)')
+            letter_items = letter_pattern.findall(risiko_raw)
+            
+            # Coba cari pola angka+titik (1., 2., etc) juga
+            number_pattern = re.compile(r'(\d+\.\s+)([^0-9\.]+?)(?=\d+\.\s+|$)')
+            number_items = number_pattern.findall(risiko_raw)
+            
+            if letter_items:
+                # Format khusus untuk sub-item berhuruf
+                for mark, content in letter_items:
+                    risiko_formatted += f"<br/><b>{mark}</b>{content}<br/>"
+                
+                # Bersihkan tag berulang
+                risiko_formatted = risiko_formatted.replace("<br/><br/>", "<br/>")
+            elif number_items:
+                # Format untuk item bernomor - dengan spasi yang jelas
+                for mark, content in number_items:
+                    risiko_formatted += f"<b>{mark}</b>{content}<br/><br/>"
+                
+                # Bersihkan tag berulang
+                risiko_formatted = risiko_formatted.replace("<br/><br/><br/>", "<br/><br/>")
+            else:
+                # Jika tidak ada pola terdeteksi, coba deteksi secara manual
+                # Pertama, coba cari pola numerik yang diikuti titik (1., 2., etc)
+                parts = re.split(r'((?:^|\s+)\d+\.\s+)', risiko_raw)
+                
+                if len(parts) > 1:
+                    # Ada pola penomoran terdeteksi
+                    risiko_formatted = parts[0] if parts[0].strip() else ""  # Teks awal jika ada
+                    
+                    for idx in range(1, len(parts), 2):
+                        if idx+1 < len(parts):
+                            # Format nomor dan kontennya dengan spasi yang jelas
+                            marker = parts[idx].strip()
+                            text = parts[idx+1].strip()
+                            
+                            # Cek apakah ada sub-poin dengan huruf
+                            sub_parts = re.split(r'((?:^|\s+)[a-z]\.\s+)', text)
+                            
+                            if len(sub_parts) > 1:
+                                # Ada sub-poin, format secara khusus
+                                risiko_formatted += f"<br/><br/><b>{marker}</b>{sub_parts[0]}"
+                                
+                                for j in range(1, len(sub_parts), 2):
+                                    if j+1 < len(sub_parts):
+                                        sub_marker = sub_parts[j].strip()
+                                        sub_text = sub_parts[j+1].strip()
+                                        risiko_formatted += f"<br/>&nbsp;&nbsp;&nbsp;<b>{sub_marker}</b> {sub_text}"
+                                    else:
+                                        # Kasus terakhir
+                                        risiko_formatted += f"<br/>&nbsp;&nbsp;&nbsp;{sub_parts[j]}"
+                            else:
+                                # Tidak ada sub-poin, format normal
+                                risiko_formatted += f"<br/><br/><b>{marker}</b>{text}"
+                        else:
+                            # Kasus terakhir
+                            risiko_formatted += f"<br/><br/>{parts[idx]}"
+                else:
+                    # Coba cari pola huruf (a., b., etc)
+                    parts = re.split(r'((?:^|\s+)[a-z]\.\s+)', risiko_raw)
+                    
+                    if len(parts) > 1:
+                        # Ada pola huruf terdeteksi
+                        risiko_formatted = parts[0] + "<br/>"  # Teks awal
+                        
+                        for i in range(1, len(parts), 2):
+                            if i+1 < len(parts):
+                                # Format huruf dan kontennya
+                                marker = parts[i].strip()
+                                text = parts[i+1].strip()
+                                risiko_formatted += f"<br/><b>{marker}</b> {text}<br/>"
+                            else:
+                                # Kasus terakhir
+                                risiko_formatted += f"<br/>{parts[i]}"
+                    else:
+                        # Tidak ada pola terdeteksi, gunakan teks asli
+                        risiko_formatted = risiko_raw
+            
+            # Format sama untuk teks solusi
+            solusi_raw = s.get('solusi', '')
+            solusi_formatted = ""
+            
+            # Coba format berdasarkan struktur yang lebih umum
+            # Pertama coba cari apakah ada pola huruf+titik (a., b., etc) yang umum di sub-item
+            letter_pattern = re.compile(r'([a-z]\.\s+)([^a-z\.]+?)(?=[a-z]\.\s+|$)')
+            letter_items = letter_pattern.findall(solusi_raw)
+            
+            # Coba cari pola angka+titik (1., 2., etc) juga
+            number_pattern = re.compile(r'(\d+\.\s+)([^0-9\.]+?)(?=\d+\.\s+|$)')
+            number_items = number_pattern.findall(solusi_raw)
+            
+            if letter_items:
+                # Format khusus untuk sub-item berhuruf
+                for mark, content in letter_items:
+                    solusi_formatted += f"<br/><b>{mark}</b>{content}<br/>"
+                
+                # Bersihkan tag berulang
+                solusi_formatted = solusi_formatted.replace("<br/><br/>", "<br/>")
+            elif number_items:
+                # Format untuk item bernomor
+                for mark, content in number_items:
+                    solusi_formatted += f"<b>{mark}</b>{content}<br/><br/>"
+                
+                # Bersihkan tag berulang
+                solusi_formatted = solusi_formatted.replace("<br/><br/><br/>", "<br/><br/>")
+            else:
+                # Jika tidak ada pola terdeteksi, coba format manual
+                # Cari kemungkinan pola a., b. etc dalam teks
+                parts = re.split(r'((?:^|\s+)[a-z]\.\s+)', solusi_raw)
+                
+                if len(parts) > 1:
+                    # Ada pola huruf, format secara manual
+                    solusi_formatted = parts[0] + "<br/>"  # Teks awal
+                    
+                    for i in range(1, len(parts), 2):
+                        if i+1 < len(parts):
+                            # Gabungkan huruf dengan teks yang mengikutinya
+                            marker = parts[i].strip()
+                            text = parts[i+1].strip()
+                            solusi_formatted += f"<br/><b>{marker}</b> {text}<br/>"
+                        else:
+                            # Kasus terakhir
+                            solusi_formatted += f"<br/>{parts[i]}"
+                else:
+                    # Tidak ada pola berhuruf terdeteksi, gunakan teks asli
+                    solusi_formatted = solusi_raw
+            
+            # Buat paragraf dengan gaya khusus
+            risiko_text = Paragraph(risiko_formatted, numbered_style)
+            solusi_text = Paragraph(solusi_formatted, numbered_style)
             
             strategi_data.append([
                 str(i+1),
