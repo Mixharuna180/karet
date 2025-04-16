@@ -880,20 +880,26 @@ with tab4:
         else:
             st.info("Belum ada data harga tertinggi. Data akan muncul setelah diinisialisasi.")
             
-        # Form untuk menambah data jika terotentikasi
-        if st.session_state.is_authenticated:
-            with st.expander("Tambah Data Harga Tertinggi"):
-                with st.form("form_harga_tertinggi"):
+        # Form untuk menambah data
+        with st.expander("Tambah Data Harga Tertinggi", expanded=True):
+            # Tampilkan warning untuk user yang belum login
+            if not st.session_state.is_authenticated:
+                st.warning("Silakan login terlebih dahulu untuk menambahkan data")
+                
+            # Disable form jika belum login
+            form_disabled = not st.session_state.is_authenticated
+            
+            with st.form("form_harga_tertinggi"):
                     col1, col2 = st.columns(2)
                     
                     with col1:
-                        tanggal = st.date_input("Tanggal", date.today(), key="tanggal_tertinggi")
-                        harga_rupiah = st.number_input("Harga Rupiah", min_value=0.0, step=100.0, key="hr_tertinggi")
-                        harga_rupiah_100 = st.number_input("Harga Rp/100", min_value=0.0, step=0.1, key="hr100_tertinggi")
+                        tanggal = st.date_input("Tanggal", date.today(), key="tanggal_tertinggi", disabled=form_disabled)
+                        harga_rupiah = st.number_input("Harga Rupiah", min_value=0.0, step=100.0, key="hr_tertinggi", disabled=form_disabled)
+                        harga_rupiah_100 = st.number_input("Harga Rp/100", min_value=0.0, step=0.1, key="hr100_tertinggi", disabled=form_disabled)
                         
                     with col2:
-                        harga_sir_sgd = st.number_input("Harga SIR SGD", min_value=0.0, step=0.1, key="hsg_tertinggi")
-                        harga_sir_rupiah = st.number_input("Harga SIR (Rp)", min_value=0.0, step=100.0, key="hsr_tertinggi")
+                        harga_sir_sgd = st.number_input("Harga SIR SGD", min_value=0.0, step=0.1, key="hsg_tertinggi", disabled=form_disabled)
+                        harga_sir_rupiah = st.number_input("Harga SIR (Rp)", min_value=0.0, step=100.0, key="hsr_tertinggi", disabled=form_disabled)
                     
                     submit_button = st.form_submit_button("Simpan Data")
                     
@@ -997,20 +1003,26 @@ with tab4:
         else:
             st.info("Belum ada data harga terendah. Data akan muncul setelah diinisialisasi.")
             
-        # Form untuk menambah data jika terotentikasi
-        if st.session_state.is_authenticated:
-            with st.expander("Tambah Data Harga Terendah"):
-                with st.form("form_harga_terendah"):
+        # Form untuk menambah data
+        with st.expander("Tambah Data Harga Terendah", expanded=True):
+            # Tampilkan warning untuk user yang belum login
+            if not st.session_state.is_authenticated:
+                st.warning("Silakan login terlebih dahulu untuk menambahkan data")
+                
+            # Disable form jika belum login
+            form_disabled = not st.session_state.is_authenticated
+            
+            with st.form("form_harga_terendah"):
                     col1, col2 = st.columns(2)
                     
                     with col1:
-                        tanggal = st.date_input("Tanggal", date.today(), key="tanggal_terendah")
-                        harga_rupiah = st.number_input("Harga Rupiah", min_value=0.0, step=100.0, key="hr_terendah")
-                        harga_rupiah_100 = st.number_input("Harga Rp/100", min_value=0.0, step=0.1, key="hr100_terendah")
+                        tanggal = st.date_input("Tanggal", date.today(), key="tanggal_terendah", disabled=form_disabled)
+                        harga_rupiah = st.number_input("Harga Rupiah", min_value=0.0, step=100.0, key="hr_terendah", disabled=form_disabled)
+                        harga_rupiah_100 = st.number_input("Harga Rp/100", min_value=0.0, step=0.1, key="hr100_terendah", disabled=form_disabled)
                         
                     with col2:
-                        harga_sir_sgd = st.number_input("Harga SIR SGD", min_value=0.0, step=0.1, key="hsg_terendah")
-                        harga_sir_rupiah = st.number_input("Harga SIR (Rp)", min_value=0.0, step=100.0, key="hsr_terendah")
+                        harga_sir_sgd = st.number_input("Harga SIR SGD", min_value=0.0, step=0.1, key="hsg_terendah", disabled=form_disabled)
+                        harga_sir_rupiah = st.number_input("Harga SIR (Rp)", min_value=0.0, step=100.0, key="hsr_terendah", disabled=form_disabled)
                     
                     submit_button = st.form_submit_button("Simpan Data")
                     
