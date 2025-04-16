@@ -782,8 +782,15 @@ if st.button("Buat Laporan PDF"):
 with tab4:
     st.header("Harga SICOM x SIR 20")
     
-    # Inisialisasi data SICOM jika belum ada
-    sicom_id = init_harga_sicom_sir_data()
+    # Gunakan ID perusahaan SICOM yang sudah ada di database
+    db = get_db_session()
+    sicom_perusahaan = db.query(Perusahaan).filter(Perusahaan.nama == "SICOM").first()
+    if sicom_perusahaan:
+        sicom_id = sicom_perusahaan.id
+    else:
+        # Jika belum ada, buat melalui fungsi inisialisasi
+        sicom_id = init_harga_sicom_sir_data()
+    db.close()
     
     # Tab untuk memisahkan data tertinggi dan terendah
     sicom_tab1, sicom_tab2 = st.tabs(["Harga Tertinggi", "Harga Terendah"])

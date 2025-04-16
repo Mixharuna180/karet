@@ -767,74 +767,53 @@ def init_harga_sicom_sir_data():
         # Data sudah ada, tidak perlu inisialisasi
         return sicom_perusahaan.id
     
-    # Data harga tertinggi
+    # Data harga tertinggi - gunakan format tanggal yang konsisten YYYY-MM-DD
     harga_tertinggi = [
-        {"tanggal": "2/3/2025", "harga_rupiah": 16580, "harga_rupiah_100": 165.80, "harga_sir_sgd": 206.10, "harga_sir_rupiah": 34171},
-        {"tanggal": "23/02/2025", "harga_rupiah": 16592, "harga_rupiah_100": 165.92, "harga_sir_sgd": 221.40, "harga_sir_rupiah": 36735},
-        {"tanggal": "16/02/2025", "harga_rupiah": 16375, "harga_rupiah_100": 163.75, "harga_sir_sgd": 210.00, "harga_sir_rupiah": 34388},
-        {"tanggal": "9/2/2025", "harga_rupiah": 16400, "harga_rupiah_100": 164.00, "harga_sir_sgd": 205.20, "harga_sir_rupiah": 33653},
-        {"tanggal": "25/02/2024", "harga_rupiah": 15735, "harga_rupiah_100": 157.35, "harga_sir_sgd": 165.00, "harga_sir_rupiah": 25963},
-        {"tanggal": "18/02/2024", "harga_rupiah": 15685, "harga_rupiah_100": 156.85, "harga_sir_sgd": 161.00, "harga_sir_rupiah": 25253},
-        {"tanggal": "11/2/2024", "harga_rupiah": 15677, "harga_rupiah_100": 156.77, "harga_sir_sgd": 154.50, "harga_sir_rupiah": 24221},
-        {"tanggal": "4/2/2024", "harga_rupiah": 15757, "harga_rupiah_100": 157.57, "harga_sir_sgd": 153.30, "harga_sir_rupiah": 24155},
-        {"tanggal": "26/02/2023", "harga_rupiah": 15330, "harga_rupiah_100": 153.30, "harga_sir_sgd": 142.00, "harga_sir_rupiah": 21769},
-        {"tanggal": "19/02/2023", "harga_rupiah": 15229, "harga_rupiah_100": 152.29, "harga_sir_sgd": 141.40, "harga_sir_rupiah": 21534},
-        {"tanggal": "12/2/2023", "harga_rupiah": 15227, "harga_rupiah_100": 152.27, "harga_sir_sgd": 139.10, "harga_sir_rupiah": 21181},
-        {"tanggal": "5/2/2023", "harga_rupiah": 15153, "harga_rupiah_100": 151.53, "harga_sir_sgd": 141.70, "harga_sir_rupiah": 21472}
+        {"tanggal": "2025-03-02", "harga_rupiah": 16580, "harga_rupiah_100": 165.80, "harga_sir_sgd": 206.10, "harga_sir_rupiah": 34171},
+        {"tanggal": "2025-02-23", "harga_rupiah": 16592, "harga_rupiah_100": 165.92, "harga_sir_sgd": 221.40, "harga_sir_rupiah": 36735},
+        {"tanggal": "2025-02-16", "harga_rupiah": 16375, "harga_rupiah_100": 163.75, "harga_sir_sgd": 210.00, "harga_sir_rupiah": 34388},
+        {"tanggal": "2025-02-09", "harga_rupiah": 16400, "harga_rupiah_100": 164.00, "harga_sir_sgd": 205.20, "harga_sir_rupiah": 33653},
+        {"tanggal": "2024-02-25", "harga_rupiah": 15735, "harga_rupiah_100": 157.35, "harga_sir_sgd": 165.00, "harga_sir_rupiah": 25963},
+        {"tanggal": "2024-02-18", "harga_rupiah": 15685, "harga_rupiah_100": 156.85, "harga_sir_sgd": 161.00, "harga_sir_rupiah": 25253},
+        {"tanggal": "2024-02-11", "harga_rupiah": 15677, "harga_rupiah_100": 156.77, "harga_sir_sgd": 154.50, "harga_sir_rupiah": 24221},
+        {"tanggal": "2024-02-04", "harga_rupiah": 15757, "harga_rupiah_100": 157.57, "harga_sir_sgd": 153.30, "harga_sir_rupiah": 24155},
+        {"tanggal": "2023-02-26", "harga_rupiah": 15330, "harga_rupiah_100": 153.30, "harga_sir_sgd": 142.00, "harga_sir_rupiah": 21769},
+        {"tanggal": "2023-02-19", "harga_rupiah": 15229, "harga_rupiah_100": 152.29, "harga_sir_sgd": 141.40, "harga_sir_rupiah": 21534},
+        {"tanggal": "2023-02-12", "harga_rupiah": 15227, "harga_rupiah_100": 152.27, "harga_sir_sgd": 139.10, "harga_sir_rupiah": 21181},
+        {"tanggal": "2023-02-05", "harga_rupiah": 15153, "harga_rupiah_100": 151.53, "harga_sir_sgd": 141.70, "harga_sir_rupiah": 21472}
     ]
     
-    # Data harga terendah
+    # Data harga terendah - gunakan format tanggal yang konsisten YYYY-MM-DD
     harga_terendah = [
-        {"tanggal": "27/10/2024", "harga_rupiah": 15778, "harga_rupiah_100": 157.78, "harga_sir_sgd": 197.30, "harga_sir_rupiah": 31130},
-        {"tanggal": "20/10/2024", "harga_rupiah": 15651, "harga_rupiah_100": 156.51, "harga_sir_sgd": 198.80, "harga_sir_rupiah": 31114},
-        {"tanggal": "13/10/2024", "harga_rupiah": 15615, "harga_rupiah_100": 156.15, "harga_sir_sgd": 202.30, "harga_sir_rupiah": 31589},
-        {"tanggal": "6/10/2024", "harga_rupiah": 15702, "harga_rupiah_100": 157.02, "harga_sir_sgd": 217.90, "harga_sir_rupiah": 34215},
-        {"tanggal": "29/10/2023", "harga_rupiah": 15953, "harga_rupiah_100": 159.53, "harga_sir_sgd": 152.90, "harga_sir_rupiah": 24392},
-        {"tanggal": "22/10/2023", "harga_rupiah": 15967, "harga_rupiah_100": 159.67, "harga_sir_sgd": 148.80, "harga_sir_rupiah": 23759},
-        {"tanggal": "15/10/2023", "harga_rupiah": 15889, "harga_rupiah_100": 158.89, "harga_sir_sgd": 150.00, "harga_sir_rupiah": 23834},
-        {"tanggal": "8/10/2023", "harga_rupiah": 15742, "harga_rupiah_100": 157.42, "harga_sir_sgd": 149.00, "harga_sir_rupiah": 23456},
-        {"tanggal": "1/10/2023", "harga_rupiah": 15646, "harga_rupiah_100": 156.46, "harga_sir_sgd": 141.20, "harga_sir_rupiah": 22092},
-        {"tanggal": "30/10/2022", "harga_rupiah": 15760, "harga_rupiah_100": 157.60, "harga_sir_sgd": 125.30, "harga_sir_rupiah": 19747},
-        {"tanggal": "23/10/2022", "harga_rupiah": 15645, "harga_rupiah_100": 156.45, "harga_sir_sgd": 124.70, "harga_sir_rupiah": 19509},
-        {"tanggal": "16/10/2022", "harga_rupiah": 15635, "harga_rupiah_100": 156.35, "harga_sir_sgd": 132.70, "harga_sir_rupiah": 20748},
-        {"tanggal": "9/10/2022", "harga_rupiah": 15426, "harga_rupiah_100": 154.26, "harga_sir_sgd": 140.40, "harga_sir_rupiah": 21658},
-        {"tanggal": "2/10/2022", "harga_rupiah": 15312, "harga_rupiah_100": 153.12, "harga_sir_sgd": 138.00, "harga_sir_rupiah": 21131}
+        {"tanggal": "2024-10-27", "harga_rupiah": 15778, "harga_rupiah_100": 157.78, "harga_sir_sgd": 197.30, "harga_sir_rupiah": 31130},
+        {"tanggal": "2024-10-20", "harga_rupiah": 15651, "harga_rupiah_100": 156.51, "harga_sir_sgd": 198.80, "harga_sir_rupiah": 31114},
+        {"tanggal": "2024-10-13", "harga_rupiah": 15615, "harga_rupiah_100": 156.15, "harga_sir_sgd": 202.30, "harga_sir_rupiah": 31589},
+        {"tanggal": "2024-10-06", "harga_rupiah": 15702, "harga_rupiah_100": 157.02, "harga_sir_sgd": 217.90, "harga_sir_rupiah": 34215},
+        {"tanggal": "2023-10-29", "harga_rupiah": 15953, "harga_rupiah_100": 159.53, "harga_sir_sgd": 152.90, "harga_sir_rupiah": 24392},
+        {"tanggal": "2023-10-22", "harga_rupiah": 15967, "harga_rupiah_100": 159.67, "harga_sir_sgd": 148.80, "harga_sir_rupiah": 23759},
+        {"tanggal": "2023-10-15", "harga_rupiah": 15889, "harga_rupiah_100": 158.89, "harga_sir_sgd": 150.00, "harga_sir_rupiah": 23834},
+        {"tanggal": "2023-10-08", "harga_rupiah": 15742, "harga_rupiah_100": 157.42, "harga_sir_sgd": 149.00, "harga_sir_rupiah": 23456},
+        {"tanggal": "2023-10-01", "harga_rupiah": 15646, "harga_rupiah_100": 156.46, "harga_sir_sgd": 141.20, "harga_sir_rupiah": 22092},
+        {"tanggal": "2022-10-30", "harga_rupiah": 15760, "harga_rupiah_100": 157.60, "harga_sir_sgd": 125.30, "harga_sir_rupiah": 19747},
+        {"tanggal": "2022-10-23", "harga_rupiah": 15645, "harga_rupiah_100": 156.45, "harga_sir_sgd": 124.70, "harga_sir_rupiah": 19509},
+        {"tanggal": "2022-10-16", "harga_rupiah": 15635, "harga_rupiah_100": 156.35, "harga_sir_sgd": 132.70, "harga_sir_rupiah": 20748},
+        {"tanggal": "2022-10-09", "harga_rupiah": 15426, "harga_rupiah_100": 154.26, "harga_sir_sgd": 140.40, "harga_sir_rupiah": 21658},
+        {"tanggal": "2022-10-02", "harga_rupiah": 15312, "harga_rupiah_100": 153.12, "harga_sir_sgd": 138.00, "harga_sir_rupiah": 21131}
     ]
     
-    # Konversi data harga tertinggi
+    # Konversi data harga tertinggi - dengan format YYYY-MM-DD
     harga_tertinggi_data = []
     for data in harga_tertinggi:
         tanggal_str = data["tanggal"]
         try:
-            # Ambil semua angka dari string tanggal (mengabaikan pemisah '/' atau lainnya)
-            parts = tanggal_str.replace('/', '-').replace('\\', '-').split('-')
-            
-            # Jika ada 3 bagian, asumsi formatnya adalah DD-MM-YYYY
-            if len(parts) == 3:
-                day, month, year = int(parts[0]), int(parts[1]), int(parts[2])
-            # Jika ada 2 bagian, coba split bagian kedua (untuk format DD/M/YYYY)
-            elif len(parts) == 2 and '/' in tanggal_str:
-                day = int(parts[0])
-                month_year = parts[1].split('/')
-                month, year = int(month_year[0]), int(month_year[1])
-            else:
-                # Jika format tidak dikenali, coba ambil angka-angka saja
-                day_month_year = re.findall(r'\d+', tanggal_str)
-                if len(day_month_year) >= 3:
-                    day, month, year = int(day_month_year[0]), int(day_month_year[1]), int(day_month_year[2])
-                else:
-                    # Fallback jika format tidak dikenali
-                    print(f"Format tanggal tidak dikenali: {tanggal_str}, menggunakan hari ini.")
-                    today = datetime.datetime.now().date()
-                    day, month, year = today.day, today.month, today.year
-            
-            # Buat objek tanggal dari komponen yang sudah diekstrak
+            # Parse tanggal dari format YYYY-MM-DD yang sudah standar
+            year, month, day = map(int, tanggal_str.split('-'))
             tanggal = datetime.date(year, month, day)
         except Exception as e:
-            # Jika gagal parsing, gunakan hari ini
-            print(f"Error parsing tanggal {tanggal_str}: {e}. Format tanggal yang diterima: DD/MM/YYYY. Menggunakan hari ini.")
+            # Jika masih gagal, gunakan hari ini
+            print(f"Error parsing tanggal {tanggal_str}: {e}. Menggunakan hari ini.")
             tanggal = datetime.datetime.now().date()
-        
+            
         harga_tertinggi_data.append(
             HargaSicomSir(
                 perusahaan_id=sicom_perusahaan.id,
@@ -847,40 +826,19 @@ def init_harga_sicom_sir_data():
             )
         )
     
-    # Konversi data harga terendah
+    # Konversi data harga terendah - dengan format YYYY-MM-DD
     harga_terendah_data = []
     for data in harga_terendah:
         tanggal_str = data["tanggal"]
         try:
-            # Ambil semua angka dari string tanggal (mengabaikan pemisah '/' atau lainnya)
-            parts = tanggal_str.replace('/', '-').replace('\\', '-').split('-')
-            
-            # Jika ada 3 bagian, asumsi formatnya adalah DD-MM-YYYY
-            if len(parts) == 3:
-                day, month, year = int(parts[0]), int(parts[1]), int(parts[2])
-            # Jika ada 2 bagian, coba split bagian kedua (untuk format DD/M/YYYY)
-            elif len(parts) == 2 and '/' in tanggal_str:
-                day = int(parts[0])
-                month_year = parts[1].split('/')
-                month, year = int(month_year[0]), int(month_year[1])
-            else:
-                # Jika format tidak dikenali, coba ambil angka-angka saja
-                day_month_year = re.findall(r'\d+', tanggal_str)
-                if len(day_month_year) >= 3:
-                    day, month, year = int(day_month_year[0]), int(day_month_year[1]), int(day_month_year[2])
-                else:
-                    # Fallback jika format tidak dikenali
-                    print(f"Format tanggal tidak dikenali: {tanggal_str}, menggunakan hari ini.")
-                    today = datetime.datetime.now().date()
-                    day, month, year = today.day, today.month, today.year
-            
-            # Buat objek tanggal dari komponen yang sudah diekstrak
+            # Parse tanggal dari format YYYY-MM-DD yang sudah standar
+            year, month, day = map(int, tanggal_str.split('-'))
             tanggal = datetime.date(year, month, day)
         except Exception as e:
-            # Jika gagal parsing, gunakan hari ini
-            print(f"Error parsing tanggal {tanggal_str}: {e}. Format tanggal yang diterima: DD/MM/YYYY. Menggunakan hari ini.")
+            # Jika masih gagal, gunakan hari ini
+            print(f"Error parsing tanggal {tanggal_str}: {e}. Menggunakan hari ini.")
             tanggal = datetime.datetime.now().date()
-        
+            
         harga_terendah_data.append(
             HargaSicomSir(
                 perusahaan_id=sicom_perusahaan.id,
@@ -905,6 +863,9 @@ try:
     default_perusahaan_id = init_db_with_karet_data()
     # Jalankan juga perbaikan saldo
     fix_all_realisasi_anggaran_saldo()
+    # Jalankan inisialisasi data SICOM SIR
+    sicom_id = init_harga_sicom_sir_data()
+    print(f"Inisialisasi data SICOM SIR berhasil dengan ID: {sicom_id}")
 except Exception as e:
     print(f"Error saat inisialisasi database: {e}")
     default_perusahaan_id = None
