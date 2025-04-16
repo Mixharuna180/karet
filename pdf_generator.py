@@ -128,19 +128,23 @@ def create_distribution_chart(anggaran_data):
         keterangan = item.get('keterangan', 'Lainnya')
         
         # Extract numeric value from formatted string
-        if isinstance(item.get('kredit'), str):
-            kredit_str = item.get('kredit').replace('Rp', '').replace(' ', '').replace('.', '').replace(',', '.')
-            kredit_val = float(kredit_str)
-        else:
-            kredit_val = item.get('kredit')
-        
-        if kredit_val > 0:  # Only include expenses
-            if keterangan in expense_data:
-                expense_data[keterangan] += kredit_val
-                volume_data[keterangan] += f", {item.get('volume', '')}"
+        try:
+            if isinstance(item.get('kredit'), str):
+                kredit_str = item.get('kredit').replace('Rp', '').replace(' ', '').replace('.', '').replace(',', '.')
+                kredit_val = float(kredit_str)
             else:
-                expense_data[keterangan] = kredit_val
-                volume_data[keterangan] = item.get('volume', '')
+                kredit_val = float(item.get('kredit', 0))
+            
+            if kredit_val > 0:  # Only include expenses
+                if keterangan in expense_data:
+                    expense_data[keterangan] += kredit_val
+                    volume_data[keterangan] += f", {item.get('volume', '')}"
+                else:
+                    expense_data[keterangan] = kredit_val
+                    volume_data[keterangan] = item.get('volume', '')
+        except (ValueError, TypeError):
+            # Skip entries that can't be converted to float
+            print(f"Tidak dapat mengkonversi nilai kredit: {item.get('kredit')}")
     
     # Create figure
     if expense_data:
@@ -382,16 +386,31 @@ def generate_pdf_penjualan_karet(data, title="Laporan Penjualan Karet"):
         content.append(Spacer(1, 24))
         
         # Add cash flow chart to the report
-        content.append(Paragraph("Visualisasi Arus Kas", subtitle_style))
-        cash_flow_chart = create_cash_flow_chart(data['realisasi_anggaran'])
-        content.append(cash_flow_chart)
-        content.append(Spacer(1, 12))
-        
+        try:
+            content.append(Paragraph("Visualisasi Arus Kas", subtitle_style))
+            cash_flow_chart = create_cash_flow_chart(data['realisasi_anggaran'])
+            if cash_flow_chart:
+                content.append(cash_flow_chart)
+            else:
+                content.append(Paragraph("(Tidak ada data yang cukup untuk membuat visualisasi arus kas)", normal_style))
+            content.append(Spacer(1, 12))
+        except Exception as e:
+            print(f"Error saat membuat grafik arus kas: {e}")
+            content.append(Paragraph("(Terjadi kesalahan saat membuat visualisasi arus kas)", normal_style))
+            content.append(Spacer(1, 12))
+            
         # Add distribution pie chart to the report
-        content.append(Paragraph("Distribusi Pengeluaran", subtitle_style))
-        distribution_chart = create_distribution_chart(data['realisasi_anggaran'])
-        if distribution_chart:
-            content.append(distribution_chart)
+        try:
+            content.append(Paragraph("Distribusi Pengeluaran", subtitle_style))
+            distribution_chart = create_distribution_chart(data['realisasi_anggaran'])
+            if distribution_chart:
+                content.append(distribution_chart)
+            else:
+                content.append(Paragraph("(Tidak ada data pengeluaran yang cukup untuk membuat visualisasi distribusi)", normal_style))
+            content.append(Spacer(1, 12))
+        except Exception as e:
+            print(f"Error saat membuat grafik distribusi: {e}")
+            content.append(Paragraph("(Terjadi kesalahan saat membuat visualisasi distribusi pengeluaran)", normal_style))
             content.append(Spacer(1, 12))
     
     # Kesimpulan & Rekomendasi

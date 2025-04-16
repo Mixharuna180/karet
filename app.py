@@ -645,6 +645,9 @@ if st.button("Buat Laporan PDF"):
                 if penjualan_karet_data:
                     # Ekstrak nilai keuntungan dengan cara yang lebih aman
                     profits = []
+                    max_profit_text = "tidak diketahui"
+                    min_profit_text = "tidak diketahui"
+                    
                     for p in penjualan_karet_data:
                         profit_str = p["keuntungan_bersih"].replace("Rp", "").replace(" ", "").replace(".", "").replace(",", ".")
                         try:
@@ -653,11 +656,12 @@ if st.button("Buat Laporan PDF"):
                             pass
                             
                     if profits:
-                        max_profit = format_currency(max(profits))
-                        min_profit = format_currency(min(profits))
+                        max_profit_text = format_currency(max(profits))
+                        min_profit_text = format_currency(min(profits))
+                    
                     kesimpulan = f"""
                     Berdasarkan analisis data penjualan karet, berikut adalah beberapa kesimpulan utama:
-                    • Profitabilitas tertinggi ditemukan pada penjualan dengan keuntungan bersih {max_profit}.
+                    • Profitabilitas tertinggi ditemukan pada penjualan dengan keuntungan bersih {max_profit_text}.
                     • Penjualan dengan jarak terjauh memiliki tingkat susut yang lebih tinggi.
                     • Rekomendasi: Fokus pada penjualan ke perusahaan dengan harga jual tinggi dan jarak yang tidak terlalu jauh untuk mengoptimalkan keuntungan.
                     """
@@ -671,12 +675,19 @@ if st.button("Buat Laporan PDF"):
                     "kesimpulan": kesimpulan
                 }
                 
-                # Buat PDF
-                pdf_bytes = generate_pdf_penjualan_karet(pdf_data, report_title)
-                
-                # Tampilkan link unduh
-                st.markdown(get_download_link(pdf_bytes), unsafe_allow_html=True)
-                st.success("Laporan PDF berhasil dibuat!")
+                # Tambahkan debugging
+                try:
+                    # Buat PDF dengan lebih banyak informasi debug
+                    st.write("Memulai pembuatan PDF...")
+                    pdf_bytes = generate_pdf_penjualan_karet(pdf_data, report_title)
+                    
+                    # Tampilkan link unduh
+                    st.markdown(get_download_link(pdf_bytes), unsafe_allow_html=True)
+                    st.success("Laporan PDF berhasil dibuat!")
+                except Exception as e:
+                    import traceback
+                    st.error(f"Terjadi kesalahan saat membuat PDF: {e}")
+                    st.code(traceback.format_exc())
             except Exception as e:
                 st.error(f"Terjadi kesalahan saat membuat laporan PDF: {e}")
     else:
