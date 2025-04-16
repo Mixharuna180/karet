@@ -93,20 +93,38 @@ Base.metadata.create_all(engine)
 # Buat sessionmaker
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Function untuk mendapatkan session database dengan penanganan error
-def get_db_session():
-    db = SessionLocal()
-    try:
-        # Test koneksi dengan melakukan query sederhana
-        db.execute(text("SELECT 1"))
-        return db
-    except Exception as e:
-        db.close()
-        print(f"Error saat koneksi ke database: {e}")
-        raise
-    finally:
-        # db.close() dipanggil di fungsi yang menggunakan get_db_session
-        pass
+# Function untuk mendapatkan session database dengan penanganan error dan reconnect
+def get_db_session(max_retries=3, retry_delay=1):
+    """
+    Mendapatkan session database dengan mekanisme reconnect otomatis
+    
+    Args:
+        max_retries (int): Jumlah maksimal percobaan koneksi ulang
+        retry_delay (int): Waktu tunggu dalam detik antara percobaan koneksi
+        
+    Returns:
+        Session: SQLAlchemy session yang aktif
+    """
+    import time
+    
+    for attempt in range(max_retries):
+        db = SessionLocal()
+        try:
+            # Test koneksi dengan melakukan query sederhana
+            db.execute(text("SELECT 1"))
+            return db
+        except Exception as e:
+            db.close()
+            
+            # Berikan log error dan coba lagi jika belum melebihi max_retries
+            if attempt < max_retries - 1:
+                print(f"Error koneksi ke database (percobaan {attempt+1}/{max_retries}): {e}")
+                print(f"Mencoba koneksi ulang dalam {retry_delay} detik...")
+                time.sleep(retry_delay)
+            else:
+                print(f"Error koneksi ke database setelah {max_retries} percobaan: {e}")
+                # Jika sudah mencapai batas maksimal percobaan, lempar exception
+                raise
 
 # Function untuk menyimpan dan mendapatkan data penjualan karet
 def tambah_perusahaan(nama, jenis=None):
@@ -114,17 +132,22 @@ def tambah_perusahaan(nama, jenis=None):
     Menambahkan perusahaan baru ke database
     """
     db = get_db_session()
-    
-    new_company = Perusahaan(
-        nama=nama,
-        jenis=jenis
-    )
-    
-    db.add(new_company)
-    db.commit()
-    db.refresh(new_company)
-    
-    return new_company.id
+    try:
+        new_company = Perusahaan(
+            nama=nama,
+            jenis=jenis
+        )
+        
+        db.add(new_company)
+        db.commit()
+        db.refresh(new_company)
+        
+        return new_company.id
+    except Exception as e:
+        db.rollback()
+        raise e
+    finally:
+        db.close()
 
 def get_perusahaan():
     """
@@ -138,7 +161,13 @@ def get_perusahaan_by_id(perusahaan_id):
     Mendapatkan perusahaan berdasarkan ID
     """
     db = get_db_session()
-    return db.query(Perusahaan).filter(Perusahaan.id == perusahaan_id).first()
+    try:
+        return db.query(Perusahaan).filter(Perusahaan.id == perusahaan_id).first()
+    except Exception as e:
+        print(f"Error saat mengambil data perusahaan: {e}")
+        raise e
+    finally:
+        db.close()
 
 def simpan_penjualan_karet(perusahaan_id, tanggal, jarak, harga_jual, susut, harga_beli, 
                           berat_awal, berat_jual, total_harga_jual, total_harga_beli, 
@@ -195,19 +224,31 @@ def get_penjualan_karet(perusahaan_id=None):
     Mendapatkan data penjualan karet
     """
     db = get_db_session()
-    query = db.query(PenjualanKaret)
-    
-    if perusahaan_id:
-        query = query.filter(PenjualanKaret.perusahaan_id == perusahaan_id)
-    
-    return query.all()
+    try:
+        query = db.query(PenjualanKaret)
+        
+        if perusahaan_id:
+            query = query.filter(PenjualanKaret.perusahaan_id == perusahaan_id)
+        
+        return query.all()
+    except Exception as e:
+        print(f"Error saat mengambil data penjualan karet: {e}")
+        raise e
+    finally:
+        db.close()
 
 def get_penjualan_karet_by_id(id):
     """
     Mendapatkan data penjualan karet berdasarkan ID
     """
     db = get_db_session()
-    return db.query(PenjualanKaret).filter(PenjualanKaret.id == id).first()
+    try:
+        return db.query(PenjualanKaret).filter(PenjualanKaret.id == id).first()
+    except Exception as e:
+        print(f"Error saat mengambil data penjualan karet by ID: {e}")
+        raise e
+    finally:
+        db.close()
 
 def hapus_penjualan_karet(id, perusahaan_id):
     """
