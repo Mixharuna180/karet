@@ -13,7 +13,8 @@ from database import (
     get_realisasi_anggaran, simpan_realisasi_anggaran,
     get_realisasi_anggaran_by_id, hapus_realisasi_anggaran,
     fix_all_realisasi_anggaran_saldo,
-    init_harga_sicom_sir_data, get_harga_sicom_sir, simpan_harga_sicom_sir, hapus_harga_sicom_sir
+    init_harga_sicom_sir_data, get_harga_sicom_sir, simpan_harga_sicom_sir, hapus_harga_sicom_sir,
+    get_db_session, Perusahaan
 )
 from pdf_generator import generate_pdf_penjualan_karet
 
