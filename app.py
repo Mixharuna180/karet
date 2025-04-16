@@ -15,13 +15,13 @@ from pdf_generator import generate_pdf
 
 # Set page configuration
 st.set_page_config(
-    page_title="Financial Reporting App",
+    page_title="Aplikasi Laporan Keuangan",
     page_icon="💼",
     layout="wide"
 )
 
 # Application title
-st.title("Financial Reporting App for Investors")
+st.title("Aplikasi Laporan Keuangan untuk Investor")
 st.markdown("---")
 
 # Initialize session state variables if they don't exist
@@ -68,39 +68,39 @@ if 'periods' not in st.session_state:
 
 # Sidebar for report configuration
 with st.sidebar:
-    st.header("Report Configuration")
-    report_title = st.text_input("Report Title", "Financial Report")
+    st.header("Konfigurasi Laporan")
+    report_title = st.text_input("Judul Laporan", "Laporan Keuangan")
     
-    st.subheader("Select Period")
-    period_type = st.selectbox("Period Type", ["Monthly", "Quarterly", "Yearly"])
-    selected_year = st.selectbox("Select Year", st.session_state.years)
+    st.subheader("Pilih Periode")
+    period_type = st.selectbox("Jenis Periode", ["Bulanan", "Triwulanan", "Tahunan"])
+    selected_year = st.selectbox("Pilih Tahun", st.session_state.years)
     
     # Get current year index for default selection
     current_year_index = st.session_state.years.index(selected_year)
     
-    if period_type == "Monthly":
+    if period_type == "Bulanan":
         periods = st.session_state.periods
-    elif period_type == "Quarterly":
+    elif period_type == "Triwulanan":
         periods = ["Q1", "Q2", "Q3", "Q4"]
     else:  # Yearly
         periods = [str(year) for year in st.session_state.years]
     
-    selected_period = st.selectbox("Select Period", periods)
+    selected_period = st.selectbox("Pilih Periode", periods)
 
 # Main content area
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "Dashboard", 
-    "Income Statement & Balance Sheet", 
-    "Cash Flow & Projections", 
-    "KPIs & Ratios", 
-    "Financial Notes"
+    "Laporan Laba Rugi & Neraca", 
+    "Arus Kas & Proyeksi", 
+    "KPI & Rasio Keuangan", 
+    "Catatan Keuangan"
 ])
 
 with tab1:
     st.header(f"{report_title}")
     
     # Financial Summary Section
-    st.subheader("Financial Summary")
+    st.subheader("Ringkasan Keuangan")
     
     # Create columns for summary data
     col1, col2, col3 = st.columns(3)
@@ -108,7 +108,7 @@ with tab1:
     with col1:
         # Calculate total revenue for selected year
         total_revenue = sum(st.session_state.revenue[selected_year].values())
-        st.metric("Annual Revenue", format_currency(total_revenue))
+        st.metric("Pendapatan Tahunan", format_currency(total_revenue))
         
         # Calculate total expenses for selected year
         total_cogs = sum(st.session_state.cogs[selected_year].values())
@@ -117,11 +117,11 @@ with tab1:
         
         # Calculate net profit
         net_profit = total_revenue - total_cogs - total_op_expenses - total_other_expenses
-        st.metric("Net Profit", format_currency(net_profit))
+        st.metric("Laba Bersih", format_currency(net_profit))
         
         # Calculate net profit margin
         net_profit_margin = calculate_net_profit_margin(net_profit, total_revenue)
-        st.metric("Net Profit Margin", format_percentage(net_profit_margin))
+        st.metric("Margin Laba Bersih", format_percentage(net_profit_margin))
     
     with col2:
         # Calculate beginning and ending balance

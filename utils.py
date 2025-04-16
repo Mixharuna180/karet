@@ -1,17 +1,18 @@
 def format_currency(value):
-    """Format a number as currency with dollar sign and commas."""
+    """Format a number as currency with Rupiah sign and commas."""
     if not isinstance(value, (int, float)):
-        return "$0.00"
+        return "Rp0"
     
     if value >= 0:
-        return "${:,.2f}".format(value)
+        return "Rp{:,.0f}".format(value)
     else:
         # Handle negative values
-        return "-${:,.2f}".format(abs(value))
+        return "-Rp{:,.0f}".format(abs(value))
 
 def format_percentage(value, decimals=2):
     """Format a number as a percentage with specified decimal places."""
     if not isinstance(value, (int, float)):
-        return "0.00%"
+        return "0,00%"
     
-    return "{:.{}f}%".format(value * 100, decimals)
+    # Replace dot with comma for Indonesian format
+    return "{:.{}f}%".format(value * 100, decimals).replace('.', ',')
