@@ -760,8 +760,12 @@ if st.button("Buat Laporan PDF"):
                     st.write("Memulai pembuatan PDF...")
                     pdf_bytes = generate_pdf_penjualan_karet(pdf_data, report_title)
                     
-                    # Tampilkan link unduh
-                    st.markdown(get_download_link(pdf_bytes), unsafe_allow_html=True)
+                    # Buat nama file dengan format yang diminta: Laporan_Keuangan_karet(Date, Time).pdf
+                    current_datetime = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    filename = f"Laporan_Keuangan_karet({current_datetime}).pdf"
+                    
+                    # Tampilkan link unduh dengan nama file yang sesuai
+                    st.markdown(get_download_link(pdf_bytes, filename=filename), unsafe_allow_html=True)
                     st.success("Laporan PDF berhasil dibuat!")
                 except Exception as e:
                     import traceback

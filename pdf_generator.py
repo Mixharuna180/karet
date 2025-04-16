@@ -32,6 +32,27 @@ def wrap_text(text, max_width=40):
     wrapped_text = '\n'.join(textwrap.wrap(text, width=max_width))
     return wrapped_text
 
+def parse_currency_id(currency_str):
+    """
+    Parses Indonesian formatted currency string to float.
+    
+    Args:
+        currency_str (str): Currency string, e.g. 'Rp1.000.000' or '1.000.000'
+        
+    Returns:
+        float: Parsed float value
+    """
+    if not isinstance(currency_str, str):
+        return float(currency_str) if currency_str is not None else 0.0
+    
+    # Remove Rp, spaces, and convert Indonesian number format to international format
+    value_str = currency_str.replace('Rp', '').replace(' ', '').replace('.', '').replace(',', '.')
+    try:
+        return float(value_str)
+    except ValueError:
+        print(f"Tidak dapat mengkonversi nilai: {currency_str}")
+        return 0.0
+
 def create_cash_flow_chart(anggaran_data):
     """
     Create a cash flow chart for PDF report
@@ -57,24 +78,10 @@ def create_cash_flow_chart(anggaran_data):
             
         dates.append(date_val)
         
-        # Extract numeric values from formatted strings
-        if isinstance(item.get('debet'), str):
-            debet_str = item.get('debet').replace('Rp', '').replace(' ', '').replace('.', '').replace(',', '.')
-            debet_val = float(debet_str)
-        else:
-            debet_val = item.get('debet')
-            
-        if isinstance(item.get('kredit'), str):
-            kredit_str = item.get('kredit').replace('Rp', '').replace(' ', '').replace('.', '').replace(',', '.')
-            kredit_val = float(kredit_str)
-        else:
-            kredit_val = item.get('kredit')
-            
-        if isinstance(item.get('saldo'), str):
-            saldo_str = item.get('saldo').replace('Rp', '').replace(' ', '').replace('.', '').replace(',', '.')
-            saldo_val = float(saldo_str)
-        else:
-            saldo_val = item.get('saldo')
+        # Parse numeric values from currency strings
+        debet_val = parse_currency_id(item.get('debet', 0))
+        kredit_val = parse_currency_id(item.get('kredit', 0))
+        saldo_val = parse_currency_id(item.get('saldo', 0))
         
         debets.append(debet_val)
         kredits.append(kredit_val)
@@ -127,24 +134,16 @@ def create_distribution_chart(anggaran_data):
     for item in anggaran_data:
         keterangan = item.get('keterangan', 'Lainnya')
         
-        # Extract numeric value from formatted string
-        try:
-            if isinstance(item.get('kredit'), str):
-                kredit_str = item.get('kredit').replace('Rp', '').replace(' ', '').replace('.', '').replace(',', '.')
-                kredit_val = float(kredit_str)
+        # Use our parse_currency_id function to safely convert values
+        kredit_val = parse_currency_id(item.get('kredit', 0))
+        
+        if kredit_val > 0:  # Only include expenses
+            if keterangan in expense_data:
+                expense_data[keterangan] += kredit_val
+                volume_data[keterangan] += f", {item.get('volume', '')}"
             else:
-                kredit_val = float(item.get('kredit', 0))
-            
-            if kredit_val > 0:  # Only include expenses
-                if keterangan in expense_data:
-                    expense_data[keterangan] += kredit_val
-                    volume_data[keterangan] += f", {item.get('volume', '')}"
-                else:
-                    expense_data[keterangan] = kredit_val
-                    volume_data[keterangan] = item.get('volume', '')
-        except (ValueError, TypeError):
-            # Skip entries that can't be converted to float
-            print(f"Tidak dapat mengkonversi nilai kredit: {item.get('kredit')}")
+                expense_data[keterangan] = kredit_val
+                volume_data[keterangan] = item.get('volume', '')
     
     # Create figure
     if expense_data:
