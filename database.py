@@ -202,6 +202,36 @@ def get_penjualan_karet(perusahaan_id=None):
     
     return query.all()
 
+def get_penjualan_karet_by_id(id):
+    """
+    Mendapatkan data penjualan karet berdasarkan ID
+    """
+    db = get_db_session()
+    return db.query(PenjualanKaret).filter(PenjualanKaret.id == id).first()
+
+def hapus_penjualan_karet(id, perusahaan_id):
+    """
+    Menghapus data penjualan karet berdasarkan ID
+    """
+    db = get_db_session()
+    try:
+        penjualan_karet = db.query(PenjualanKaret).filter(
+            PenjualanKaret.id == id, 
+            PenjualanKaret.perusahaan_id == perusahaan_id
+        ).first()
+        
+        if not penjualan_karet:
+            raise Exception("Data penjualan karet tidak ditemukan")
+        
+        db.delete(penjualan_karet)
+        db.commit()
+        return True
+    except Exception as e:
+        db.rollback()
+        raise e
+    finally:
+        db.close()
+
 # Function untuk menyimpan dan mendapatkan data strategi risiko
 def simpan_strategi_risiko(perusahaan_id, aspek, risiko, solusi):
     """

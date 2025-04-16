@@ -45,9 +45,36 @@ if 'selected_perusahaan_id' not in st.session_state:
         st.session_state.selected_perusahaan_id = None
         st.session_state.selected_perusahaan_nama = ""
 
+# Inisialisasi variabel autentikasi
+if 'is_authenticated' not in st.session_state:
+    st.session_state.is_authenticated = False
+
+# Kata sandi untuk akses edit data (dalam aplikasi nyata seharusnya disimpan dengan aman)
+admin_password = "karet123"
+
 # Sidebar for company selection and data input
 with st.sidebar:
     st.header("Konfigurasi Laporan")
+    
+    # Autentikasi untuk akses edit
+    st.subheader("Akses Admin")
+    if not st.session_state.is_authenticated:
+        with st.form("login_form"):
+            password = st.text_input("Masukkan kata sandi", type="password")
+            login_button = st.form_submit_button("Login")
+            
+            if login_button:
+                if password == admin_password:
+                    st.session_state.is_authenticated = True
+                    st.success("Login berhasil!")
+                    st.rerun()
+                else:
+                    st.error("Kata sandi salah!")
+    else:
+        st.success("Anda sudah login sebagai admin.")
+        if st.button("Logout"):
+            st.session_state.is_authenticated = False
+            st.rerun()
     
     # Perusahaan Selection
     st.subheader("Pilih Perusahaan")
@@ -114,6 +141,12 @@ with tab1:
     
     # Display form to add new data
     with st.expander("Tambah/Edit Data Penjualan Karet", expanded=True):
+        if not st.session_state.is_authenticated:
+            st.warning("Silakan login sebagai admin di sidebar untuk menambah atau mengedit data")
+        
+        # Disable form jika belum terotentikasi
+        form_disabled = not st.session_state.is_authenticated
+        
         with st.form("penjualan_karet_form"):
             col1, col2 = st.columns(2)
             
@@ -265,6 +298,9 @@ with tab2:
     
     # Display form to add new data
     with st.expander("Tambah Strategi dan Risiko", expanded=True):
+        if not st.session_state.is_authenticated:
+            st.warning("Silakan login sebagai admin di sidebar untuk menambah atau mengedit data")
+            
         with st.form("strategi_risiko_form"):
             aspek = st.text_input("Aspek")
             risiko = st.text_area("Risiko")
