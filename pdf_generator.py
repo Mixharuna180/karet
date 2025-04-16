@@ -30,27 +30,47 @@ def wrap_text(text, max_width=40, add_spacing=False):
         text = str(text)
     
     if add_spacing:
-        # Mencari pola angka diikuti titik di awal teks (contoh: "1. ", "2. ")
         import re
-        # Tambahkan spasi extra sebelum item bernomor (kecuali yang pertama)
-        text = re.sub(r'(?<!^)(\d+\.\s)', r'\n\n\1', text)
         
-        # Untuk sub-paragraf, tambahkan spasi setelah titik atau koma
-        text = re.sub(r'(\.\s|\,\s)(?=[A-Z])', r'\1\n', text)
+        # Pertama, bersihkan teks dari "\n" yang mungkin sudah ada
+        text = text.replace('\n', ' ')
+        
+        # 1. Mencari pola angka diikuti titik (contoh: "1.", "2.")
+        # Tambahkan 2 baris baru sebelum item bernomor (kecuali yang pertama)
+        text = re.sub(r'(?<!^)\s*(\d+\.)', r'\n\n\1', text)
+        
+        # 2. Mencari pola huruf diikuti titik yang mengindikasikan sub-item (contoh: "a.", "b.")
+        # Tambahkan baris baru sebelum sub-item, dan pastikan ada spasi setelahnya
+        text = re.sub(r'\s*([a-z]\.)\s*', r'\n\1 ', text)
+        
+        # 3. Deteksi pola akhir kalimat (titik diikuti spasi dan huruf besar) untuk
+        # membuat paragraf baru pada awal kalimat baru dalam item yang sama
+        text = re.sub(r'(\.)(\s+)([A-Z])', r'\1\n\3', text)
     
-    # Use textwrap to wrap text to fit column width
-    paragraphs = text.split('\n\n')
+    # Wrap text to fit column width
+    # Pertama kita pecah berdasarkan baris kosong
+    paragraphs = re.split(r'\n\s*\n', text) if add_spacing else [text]
     wrapped_paragraphs = []
     
     for p in paragraphs:
+        # Pecah paragraf berdasarkan baris
         lines = p.split('\n')
         wrapped_lines = []
         
         for line in lines:
-            wrapped_lines.append('\n'.join(textwrap.wrap(line, width=max_width)))
-            
-        wrapped_paragraphs.append('\n'.join(wrapped_lines))
+            line = line.strip()
+            if line:
+                # Gunakan textwrap untuk memastikan lebar teks sesuai
+                wrapped = textwrap.wrap(line, width=max_width)
+                if wrapped:
+                    wrapped_lines.append('\n'.join(wrapped))
+        
+        if wrapped_lines:
+            # Jika ini adalah item bernomor, pastikan formatnya konsisten
+            wrapped_paragraph = '\n'.join(wrapped_lines)
+            wrapped_paragraphs.append(wrapped_paragraph)
     
+    # Gabungkan semua dengan spasi yang jelas antar paragraf
     return '\n\n'.join(wrapped_paragraphs)
 
 def parse_currency_id(currency_str):
