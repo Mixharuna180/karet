@@ -1,11 +1,30 @@
-from reportlab.lib.pagesizes import A4
+from reportlab.lib.pagesizes import A4, landscape
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
-from reportlab.lib.units import cm
+from reportlab.lib.units import cm, inch
 from io import BytesIO
 import datetime
+import textwrap
 from utils import format_currency
+
+def wrap_text(text, max_width=40):
+    """
+    Wraps text to fit within specified width
+    
+    Args:
+        text (str): Text to wrap
+        max_width (int): Maximum width in characters
+        
+    Returns:
+        str: Wrapped text
+    """
+    if not isinstance(text, str):
+        text = str(text)
+    
+    # Use textwrap to wrap text to fit column width
+    wrapped_text = '\n'.join(textwrap.wrap(text, width=max_width))
+    return wrapped_text
 
 def generate_pdf_penjualan_karet(data, title="Laporan Penjualan Karet"):
     """
@@ -23,11 +42,11 @@ def generate_pdf_penjualan_karet(data, title="Laporan Penjualan Karet"):
     # Create PDF document
     doc = SimpleDocTemplate(
         buffer,
-        pagesize=A4,
-        rightMargin=72,
-        leftMargin=72,
-        topMargin=72,
-        bottomMargin=72
+        pagesize=landscape(A4),  # Use landscape orientation for wider tables
+        rightMargin=36,
+        leftMargin=36,
+        topMargin=36,
+        bottomMargin=36
     )
     
     # Get styles
@@ -115,11 +134,15 @@ def generate_pdf_penjualan_karet(data, title="Laporan Penjualan Karet"):
         ongkos_data = [ongkos_header]
         
         for p in data['penjualan_karet']:
+            # Wrap rekomendasi text so it doesn't exceed the column width
+            rekomendasi_text = p.get('rekomendasi', '')
+            wrapped_rekomendasi = Paragraph(wrap_text(rekomendasi_text, max_width=60), normal_style)
+            
             ongkos_data.append([
                 p.get('nama_perusahaan', ''),
                 p.get('ongkos_kirim', ''),
                 p.get('keuntungan_bersih', ''),
-                p.get('rekomendasi', '')
+                wrapped_rekomendasi
             ])
         
         col_widths = [doc.width * w for w in [0.15, 0.2, 0.2, 0.45]]
@@ -146,11 +169,16 @@ def generate_pdf_penjualan_karet(data, title="Laporan Penjualan Karet"):
         strategi_data = [strategi_header]
         
         for i, s in enumerate(data['strategi_risiko']):
+            # Wrap the text in each column
+            aspek_text = Paragraph(wrap_text(s.get('aspek', ''), max_width=30), normal_style)
+            risiko_text = Paragraph(wrap_text(s.get('risiko', ''), max_width=35), normal_style)
+            solusi_text = Paragraph(wrap_text(s.get('solusi', ''), max_width=50), normal_style)
+            
             strategi_data.append([
                 str(i+1),
-                s.get('aspek', ''),
-                s.get('risiko', ''),
-                s.get('solusi', '')
+                aspek_text,
+                risiko_text,
+                solusi_text
             ])
         
         col_widths = [doc.width * w for w in [0.05, 0.25, 0.3, 0.4]]
@@ -177,6 +205,9 @@ def generate_pdf_penjualan_karet(data, title="Laporan Penjualan Karet"):
         anggaran_data = [anggaran_header]
         
         for i, a in enumerate(data['realisasi_anggaran']):
+            # Wrap keterangan text
+            keterangan_text = Paragraph(wrap_text(a.get('keterangan', ''), max_width=40), normal_style)
+            
             anggaran_data.append([
                 str(i+1),
                 a.get('tanggal', ''),
@@ -184,7 +215,7 @@ def generate_pdf_penjualan_karet(data, title="Laporan Penjualan Karet"):
                 a.get('kredit', ''),
                 a.get('saldo', ''),
                 a.get('volume', ''),
-                a.get('keterangan', '')
+                keterangan_text
             ])
         
         col_widths = [doc.width * w for w in [0.05, 0.12, 0.13, 0.13, 0.13, 0.14, 0.3]]
