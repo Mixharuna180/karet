@@ -12,7 +12,8 @@ from database import (
     get_strategi_risiko, simpan_strategi_risiko,
     get_realisasi_anggaran, simpan_realisasi_anggaran,
     get_realisasi_anggaran_by_id, hapus_realisasi_anggaran,
-    fix_all_realisasi_anggaran_saldo
+    fix_all_realisasi_anggaran_saldo,
+    init_harga_sicom_sir_data, get_harga_sicom_sir, simpan_harga_sicom_sir, hapus_harga_sicom_sir
 )
 from pdf_generator import generate_pdf_penjualan_karet
 
@@ -123,10 +124,11 @@ with st.sidebar:
     report_title = st.text_input("Judul Laporan", "Laporan Penjualan Karet")
 
 # Main content area with tabs
-tab1, tab2, tab3 = st.tabs([
+tab1, tab2, tab3, tab4 = st.tabs([
     "Rencana Penjualan Karet", 
     "Strategi dan Risiko", 
-    "Realisasi Anggaran"
+    "Realisasi Anggaran",
+    "Harga SICOM x SIR 20"
 ])
 
 # Tab 1: Rencana Penjualan Karet
