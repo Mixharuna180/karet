@@ -4,6 +4,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 from datetime import datetime, date
 import numpy as np
+import base64
 from utils import format_currency, format_percentage
 from database import (
     get_perusahaan, get_perusahaan_by_id, tambah_perusahaan,
@@ -11,6 +12,7 @@ from database import (
     get_strategi_risiko, simpan_strategi_risiko,
     get_realisasi_anggaran, simpan_realisasi_anggaran
 )
+from pdf_generator import generate_pdf_penjualan_karet
 
 # Set page configuration
 st.set_page_config(
@@ -452,6 +454,103 @@ with tab3:
                 st.plotly_chart(fig_pie, use_container_width=True)
     else:
         st.info("Belum ada data realisasi anggaran. Silakan tambahkan data baru menggunakan form di atas.")
+
+# Download PDF section
+st.markdown("---")
+st.header("Unduh Laporan PDF")
+
+# Fungsi untuk mengubah byte menjadi link unduh
+def get_download_link(pdf_bytes, filename="laporan_penjualan_karet.pdf", text="Unduh Laporan PDF"):
+    """
+    Generates a download link for a PDF file.
+    """
+    b64 = base64.b64encode(pdf_bytes).decode()
+    href = f'<a href="data:application/pdf;base64,{b64}" download="{filename}">{text}</a>'
+    return href
+
+# Tombol untuk mengunduh laporan PDF
+if st.button("Buat Laporan PDF"):
+    if st.session_state.selected_perusahaan_id:
+        with st.spinner("Membuat laporan PDF..."):
+            try:
+                # Dapatkan data perusahaan
+                perusahaan = get_perusahaan_by_id(st.session_state.selected_perusahaan_id)
+                perusahaan_data = {
+                    "nama": perusahaan.nama,
+                    "jenis": perusahaan.jenis
+                }
+                
+                # Dapatkan data penjualan karet
+                penjualan_karet_data = []
+                for p in get_penjualan_karet(st.session_state.selected_perusahaan_id):
+                    penjualan_karet_data.append({
+                        "nama_perusahaan": perusahaan.nama,
+                        "jarak": p.jarak,
+                        "harga_jual": format_currency(p.harga_jual),
+                        "susut": f"{p.susut}%",
+                        "harga_beli": format_currency(p.harga_beli),
+                        "berat_awal": f"{p.berat_awal} kg",
+                        "berat_jual": f"{p.berat_jual} kg",
+                        "total_harga_jual": format_currency(p.total_harga_jual),
+                        "total_harga_beli": format_currency(p.total_harga_beli),
+                        "keuntungan_kotor": format_currency(p.keuntungan_kotor),
+                        "ongkos_kirim": format_currency(p.ongkos_kirim),
+                        "keuntungan_bersih": format_currency(p.keuntungan_bersih),
+                        "rekomendasi": p.rekomendasi
+                    })
+                
+                # Dapatkan data strategi risiko
+                strategi_risiko_data = []
+                for s in get_strategi_risiko(st.session_state.selected_perusahaan_id):
+                    strategi_risiko_data.append({
+                        "aspek": s.aspek,
+                        "risiko": s.risiko,
+                        "solusi": s.solusi
+                    })
+                
+                # Dapatkan data realisasi anggaran
+                realisasi_anggaran_data = []
+                for a in sorted(get_realisasi_anggaran(st.session_state.selected_perusahaan_id), key=lambda x: x.tanggal):
+                    realisasi_anggaran_data.append({
+                        "tanggal": a.tanggal.strftime("%d/%m/%Y"),
+                        "debet": format_currency(a.debet),
+                        "kredit": format_currency(a.kredit),
+                        "saldo": format_currency(a.saldo),
+                        "volume": a.volume,
+                        "keterangan": a.keterangan
+                    })
+                
+                # Kesimpulan dari data
+                kesimpulan = ""
+                if penjualan_karet_data:
+                    max_profit = max(p["keuntungan_bersih"].replace("Rp", "").replace(".", "").replace(",", ".") for p in penjualan_karet_data)
+                    min_profit = min(p["keuntungan_bersih"].replace("Rp", "").replace(".", "").replace(",", ".") for p in penjualan_karet_data)
+                    kesimpulan = f"""
+                    Berdasarkan analisis data penjualan karet, berikut adalah beberapa kesimpulan utama:
+                    • Profitabilitas tertinggi ditemukan pada penjualan dengan keuntungan bersih {max_profit}.
+                    • Penjualan dengan jarak terjauh memiliki tingkat susut yang lebih tinggi.
+                    • Rekomendasi: Fokus pada penjualan ke perusahaan dengan harga jual tinggi dan jarak yang tidak terlalu jauh untuk mengoptimalkan keuntungan.
+                    """
+                
+                # Data untuk PDF
+                pdf_data = {
+                    "perusahaan": perusahaan_data,
+                    "penjualan_karet": penjualan_karet_data,
+                    "strategi_risiko": strategi_risiko_data,
+                    "realisasi_anggaran": realisasi_anggaran_data,
+                    "kesimpulan": kesimpulan
+                }
+                
+                # Buat PDF
+                pdf_bytes = generate_pdf_penjualan_karet(pdf_data, report_title)
+                
+                # Tampilkan link unduh
+                st.markdown(get_download_link(pdf_bytes), unsafe_allow_html=True)
+                st.success("Laporan PDF berhasil dibuat!")
+            except Exception as e:
+                st.error(f"Terjadi kesalahan saat membuat laporan PDF: {e}")
+    else:
+        st.error("Silakan pilih perusahaan terlebih dahulu.")
 
 # Footer
 st.markdown("---")
