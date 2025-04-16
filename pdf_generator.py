@@ -14,23 +14,44 @@ import matplotlib
 matplotlib.use('Agg')
 from utils import format_currency
 
-def wrap_text(text, max_width=40):
+def wrap_text(text, max_width=40, add_spacing=False):
     """
-    Wraps text to fit within specified width
+    Wraps text to fit within specified width and optionally adds spacing between paragraphs
     
     Args:
         text (str): Text to wrap
         max_width (int): Maximum width in characters
+        add_spacing (bool): Whether to add extra spacing between paragraphs (numbered items)
         
     Returns:
-        str: Wrapped text
+        str: Wrapped text with proper spacing
     """
     if not isinstance(text, str):
         text = str(text)
     
+    if add_spacing:
+        # Mencari pola angka diikuti titik di awal teks (contoh: "1. ", "2. ")
+        import re
+        # Tambahkan spasi extra sebelum item bernomor (kecuali yang pertama)
+        text = re.sub(r'(?<!^)(\d+\.\s)', r'\n\n\1', text)
+        
+        # Untuk sub-paragraf, tambahkan spasi setelah titik atau koma
+        text = re.sub(r'(\.\s|\,\s)(?=[A-Z])', r'\1\n', text)
+    
     # Use textwrap to wrap text to fit column width
-    wrapped_text = '\n'.join(textwrap.wrap(text, width=max_width))
-    return wrapped_text
+    paragraphs = text.split('\n\n')
+    wrapped_paragraphs = []
+    
+    for p in paragraphs:
+        lines = p.split('\n')
+        wrapped_lines = []
+        
+        for line in lines:
+            wrapped_lines.append('\n'.join(textwrap.wrap(line, width=max_width)))
+            
+        wrapped_paragraphs.append('\n'.join(wrapped_lines))
+    
+    return '\n\n'.join(wrapped_paragraphs)
 
 def parse_currency_id(currency_str):
     """
@@ -318,10 +339,12 @@ def generate_pdf_penjualan_karet(data, title="Laporan Penjualan Karet"):
         strategi_data = [strategi_header]
         
         for i, s in enumerate(data['strategi_risiko']):
-            # Wrap the text in each column
+            # Wrap the text in each column with added spacing for better readability
             aspek_text = Paragraph(wrap_text(s.get('aspek', ''), max_width=30), normal_style)
-            risiko_text = Paragraph(wrap_text(s.get('risiko', ''), max_width=35), normal_style)
-            solusi_text = Paragraph(wrap_text(s.get('solusi', ''), max_width=50), normal_style)
+            # Tambahkan spasi khusus untuk kolom risiko karena sering berisi numbering dan sub-paragraf
+            risiko_text = Paragraph(wrap_text(s.get('risiko', ''), max_width=35, add_spacing=True), normal_style)
+            # Tambahkan spasi khusus untuk kolom solusi juga
+            solusi_text = Paragraph(wrap_text(s.get('solusi', ''), max_width=50, add_spacing=True), normal_style)
             
             strategi_data.append([
                 str(i+1),
@@ -338,9 +361,16 @@ def generate_pdf_penjualan_karet(data, title="Laporan Penjualan Karet"):
             ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
             ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            # Tambahkan padding untuk baris data agar lebih mudah dibaca
+            ('TOPPADDING', (0, 1), (-1, -1), 8),  
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
+            ('LEFTPADDING', (0, 0), (-1, -1), 6),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 6),
             ('GRID', (0, 0), (-1, -1), 1, colors.black),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('ALIGN', (0, 1), (0, -1), 'CENTER')
+            ('ALIGN', (0, 1), (0, -1), 'CENTER'),
+            # Baris garis lebih tipis agar tidak terlalu memenuhi tabel
+            ('LINEWIDTH', (0, 0), (-1, -1), 0.5)
         ]))
         
         content.append(strategi_table)
