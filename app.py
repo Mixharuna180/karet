@@ -333,11 +333,12 @@ with tab3:
                 kredit = st.number_input("Kredit (Out)", min_value=0.0, step=100000.0)
             
             with col2:
-                # Hitung saldo terakhir
+                # Hitung saldo berdasarkan data terakhir yang diurutkan berdasarkan tanggal
                 last_saldo = 0
                 if anggaran_data:
-                    sorted_data = sorted(anggaran_data, key=lambda x: x.tanggal, reverse=True)
-                    last_saldo = sorted_data[0].saldo
+                    sorted_data = sorted(anggaran_data, key=lambda x: x.tanggal)
+                    # Ambil saldo terakhir dari data yang sudah ada
+                    last_saldo = sorted_data[-1].saldo
                 
                 # Calculate new saldo
                 saldo = last_saldo + debet - kredit
@@ -350,16 +351,17 @@ with tab3:
             
             if submit_button and st.session_state.selected_perusahaan_id:
                 try:
-                    simpan_realisasi_anggaran(
+                    # Fungsi simpan_realisasi_anggaran sekarang secara otomatis menghitung saldo yang benar
+                    new_saldo = simpan_realisasi_anggaran(
                         st.session_state.selected_perusahaan_id,
                         tanggal,
                         debet,
                         kredit,
-                        saldo,
+                        saldo,  # Parameter saldo ini sekarang tidak digunakan, tetapi dikirim untuk kompatibilitas
                         volume,
                         keterangan
                     )
-                    st.success("Realisasi anggaran berhasil disimpan!")
+                    st.success(f"Realisasi anggaran berhasil disimpan! Saldo baru: {format_currency(new_saldo)}")
                     st.rerun()
                 except Exception as e:
                     st.error(f"Terjadi kesalahan saat menyimpan data: {e}")

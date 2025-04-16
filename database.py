@@ -246,7 +246,7 @@ def get_strategi_risiko(perusahaan_id=None):
 # Function untuk menyimpan dan mendapatkan data realisasi anggaran
 def simpan_realisasi_anggaran(perusahaan_id, tanggal, debet, kredit, saldo, volume, keterangan):
     """
-    Menyimpan data realisasi anggaran
+    Menyimpan data realisasi anggaran dan rekalkukasi saldo
     """
     db = get_db_session()
     
@@ -257,11 +257,25 @@ def simpan_realisasi_anggaran(perusahaan_id, tanggal, debet, kredit, saldo, volu
         RealisasiAnggaran.keterangan == keterangan
     ).first()
     
+    # Dapatkan transaksi sebelum tanggal ini untuk menghitung saldo awal
+    previous_transactions = db.query(RealisasiAnggaran).filter(
+        RealisasiAnggaran.perusahaan_id == perusahaan_id,
+        RealisasiAnggaran.tanggal < tanggal
+    ).order_by(RealisasiAnggaran.tanggal).all()
+    
+    # Hitung saldo awal dari transaksi sebelumnya
+    previous_saldo = 0
+    if previous_transactions:
+        previous_saldo = previous_transactions[-1].saldo
+    
+    # Saldo baru = saldo sebelumnya + debet - kredit
+    new_saldo = previous_saldo + debet - kredit
+    
     if existing_data:
         # Update data yang sudah ada
         existing_data.debet = debet
         existing_data.kredit = kredit
-        existing_data.saldo = saldo
+        existing_data.saldo = new_saldo  # Gunakan saldo yang baru dihitung
         existing_data.volume = volume
     else:
         # Buat data baru
@@ -270,17 +284,30 @@ def simpan_realisasi_anggaran(perusahaan_id, tanggal, debet, kredit, saldo, volu
             tanggal=tanggal,
             debet=debet,
             kredit=kredit,
-            saldo=saldo,
+            saldo=new_saldo,  # Gunakan saldo yang baru dihitung
             volume=volume,
             keterangan=keterangan
         )
         db.add(new_data)
     
+    # Perbarui saldo untuk semua transaksi setelah tanggal ini
+    next_transactions = db.query(RealisasiAnggaran).filter(
+        RealisasiAnggaran.perusahaan_id == perusahaan_id,
+        RealisasiAnggaran.tanggal > tanggal
+    ).order_by(RealisasiAnggaran.tanggal).all()
+    
+    running_saldo = new_saldo
+    for tx in next_transactions:
+        running_saldo = running_saldo + tx.debet - tx.kredit
+        tx.saldo = running_saldo
+    
     db.commit()
+    
+    return new_saldo  # Mengembalikan saldo yang baru dihitung
 
 def get_realisasi_anggaran(perusahaan_id=None):
     """
-    Mendapatkan data realisasi anggaran
+    Mendapatkan data realisasi anggaran diurutkan berdasarkan tanggal
     """
     db = get_db_session()
     query = db.query(RealisasiAnggaran)
@@ -288,7 +315,8 @@ def get_realisasi_anggaran(perusahaan_id=None):
     if perusahaan_id:
         query = query.filter(RealisasiAnggaran.perusahaan_id == perusahaan_id)
     
-    return query.all()
+    # Mengembalikan hasil yang sudah diurutkan berdasarkan tanggal
+    return query.order_by(RealisasiAnggaran.tanggal).all()
 
 # Inisialisasi database dengan data penjualan karet
 def init_db_with_karet_data():
