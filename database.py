@@ -1,4 +1,5 @@
 import os
+import re
 import streamlit as st
 from sqlalchemy import create_engine, Column, Integer, Float, String, Date, ForeignKey, text
 from sqlalchemy.ext.declarative import declarative_base
@@ -804,9 +805,35 @@ def init_harga_sicom_sir_data():
     harga_tertinggi_data = []
     for data in harga_tertinggi:
         tanggal_str = data["tanggal"]
-        # Parse tanggal dari format "DD/MM/YYYY"
-        day, month, year = map(int, tanggal_str.split('/'))
-        tanggal = datetime.date(year, month, day)
+        try:
+            # Ambil semua angka dari string tanggal (mengabaikan pemisah '/' atau lainnya)
+            parts = tanggal_str.replace('/', '-').replace('\\', '-').split('-')
+            
+            # Jika ada 3 bagian, asumsi formatnya adalah DD-MM-YYYY
+            if len(parts) == 3:
+                day, month, year = int(parts[0]), int(parts[1]), int(parts[2])
+            # Jika ada 2 bagian, coba split bagian kedua (untuk format DD/M/YYYY)
+            elif len(parts) == 2 and '/' in tanggal_str:
+                day = int(parts[0])
+                month_year = parts[1].split('/')
+                month, year = int(month_year[0]), int(month_year[1])
+            else:
+                # Jika format tidak dikenali, coba ambil angka-angka saja
+                day_month_year = re.findall(r'\d+', tanggal_str)
+                if len(day_month_year) >= 3:
+                    day, month, year = int(day_month_year[0]), int(day_month_year[1]), int(day_month_year[2])
+                else:
+                    # Fallback jika format tidak dikenali
+                    print(f"Format tanggal tidak dikenali: {tanggal_str}, menggunakan hari ini.")
+                    today = datetime.datetime.now().date()
+                    day, month, year = today.day, today.month, today.year
+            
+            # Buat objek tanggal dari komponen yang sudah diekstrak
+            tanggal = datetime.date(year, month, day)
+        except Exception as e:
+            # Jika gagal parsing, gunakan hari ini
+            print(f"Error parsing tanggal {tanggal_str}: {e}. Format tanggal yang diterima: DD/MM/YYYY. Menggunakan hari ini.")
+            tanggal = datetime.datetime.now().date()
         
         harga_tertinggi_data.append(
             HargaSicomSir(
@@ -824,9 +851,35 @@ def init_harga_sicom_sir_data():
     harga_terendah_data = []
     for data in harga_terendah:
         tanggal_str = data["tanggal"]
-        # Parse tanggal dari format "DD/MM/YYYY"
-        day, month, year = map(int, tanggal_str.split('/'))
-        tanggal = datetime.date(year, month, day)
+        try:
+            # Ambil semua angka dari string tanggal (mengabaikan pemisah '/' atau lainnya)
+            parts = tanggal_str.replace('/', '-').replace('\\', '-').split('-')
+            
+            # Jika ada 3 bagian, asumsi formatnya adalah DD-MM-YYYY
+            if len(parts) == 3:
+                day, month, year = int(parts[0]), int(parts[1]), int(parts[2])
+            # Jika ada 2 bagian, coba split bagian kedua (untuk format DD/M/YYYY)
+            elif len(parts) == 2 and '/' in tanggal_str:
+                day = int(parts[0])
+                month_year = parts[1].split('/')
+                month, year = int(month_year[0]), int(month_year[1])
+            else:
+                # Jika format tidak dikenali, coba ambil angka-angka saja
+                day_month_year = re.findall(r'\d+', tanggal_str)
+                if len(day_month_year) >= 3:
+                    day, month, year = int(day_month_year[0]), int(day_month_year[1]), int(day_month_year[2])
+                else:
+                    # Fallback jika format tidak dikenali
+                    print(f"Format tanggal tidak dikenali: {tanggal_str}, menggunakan hari ini.")
+                    today = datetime.datetime.now().date()
+                    day, month, year = today.day, today.month, today.year
+            
+            # Buat objek tanggal dari komponen yang sudah diekstrak
+            tanggal = datetime.date(year, month, day)
+        except Exception as e:
+            # Jika gagal parsing, gunakan hari ini
+            print(f"Error parsing tanggal {tanggal_str}: {e}. Format tanggal yang diterima: DD/MM/YYYY. Menggunakan hari ini.")
+            tanggal = datetime.datetime.now().date()
         
         harga_terendah_data.append(
             HargaSicomSir(
