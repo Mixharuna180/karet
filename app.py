@@ -778,6 +778,329 @@ if st.button("Buat Laporan PDF"):
     else:
         st.error("Silakan pilih perusahaan terlebih dahulu.")
 
+# Tab 4: Harga SICOM x SIR 20
+with tab4:
+    st.header("Harga SICOM x SIR 20")
+    
+    # Inisialisasi data SICOM jika belum ada
+    sicom_id = init_harga_sicom_sir_data()
+    
+    # Tab untuk memisahkan data tertinggi dan terendah
+    sicom_tab1, sicom_tab2 = st.tabs(["Harga Tertinggi", "Harga Terendah"])
+    
+    with sicom_tab1:
+        st.subheader("Harga Perbandingan Tertinggi 3 Tahun Terakhir di Bulan Yang Sama")
+        
+        # Ambil data harga tertinggi
+        harga_tertinggi_data = get_harga_sicom_sir(sicom_id, "Tertinggi")
+        
+        if harga_tertinggi_data:
+            # Buat DataFrame untuk tampilan
+            df_tertinggi = pd.DataFrame([
+                {
+                    "ID": h.id,
+                    "Tanggal": h.tanggal.strftime("%d/%m/%Y"),
+                    "Harga Rupiah": format_currency(h.harga_rupiah),
+                    "Harga Rp/100": f"Rp {h.harga_rupiah_100:.2f}",
+                    "Harga SIR SGD": h.harga_sir_sgd,
+                    "Harga SIR (Rp)": format_currency(h.harga_sir_rupiah)
+                } for h in sorted(harga_tertinggi_data, key=lambda x: x.tanggal, reverse=True)
+            ])
+            
+            # Tampilkan data dalam tabel
+            st.dataframe(df_tertinggi.drop(columns=["ID"]), use_container_width=True)
+            
+            # Fitur edit dan hapus jika terotentikasi
+            if st.session_state.is_authenticated:
+                with st.expander("Edit/Hapus Data Harga Tertinggi"):
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        # Pilih data untuk dihapus
+                        if not df_tertinggi.empty:
+                            selected_data_id = st.selectbox(
+                                "Pilih data untuk dihapus", 
+                                df_tertinggi["ID"].tolist(),
+                                format_func=lambda x: f"Tanggal: {df_tertinggi[df_tertinggi['ID']==x]['Tanggal'].values[0]}"
+                            )
+                            
+                            if st.button("🗑️ Hapus Data", key="delete_tertinggi_button"):
+                                try:
+                                    hapus_harga_sicom_sir(selected_data_id, sicom_id)
+                                    st.success("Data berhasil dihapus!")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Terjadi kesalahan saat menghapus data: {e}")
+            
+            # Visualisasi data
+            st.subheader("Visualisasi Harga SICOM x SIR 20 (Tertinggi)")
+            
+            # Konversi data untuk visualisasi
+            vis_data = pd.DataFrame([
+                {
+                    "Tanggal": h.tanggal,
+                    "Harga Rupiah": h.harga_rupiah,
+                    "Harga SIR SGD": h.harga_sir_sgd,
+                    "Harga SIR (Rp)": h.harga_sir_rupiah,
+                    "Tahun": h.tanggal.year
+                } for h in harga_tertinggi_data
+            ])
+            
+            # Grafik harga SICOM x SIR 20
+            fig1 = px.line(
+                vis_data,
+                x="Tanggal",
+                y=["Harga Rupiah", "Harga SIR (Rp)"],
+                title="Perbandingan Harga Rupiah dan Harga SIR 20",
+                color_discrete_sequence=["blue", "red"]
+            )
+            st.plotly_chart(fig1, use_container_width=True)
+            
+            # Scatter plot harga SIR SGD vs harga SIR Rupiah
+            fig2 = px.scatter(
+                vis_data,
+                x="Harga SIR SGD",
+                y="Harga SIR (Rp)",
+                color="Tahun",
+                size="Harga Rupiah",
+                hover_name="Tanggal",
+                title="Hubungan antara Harga SIR SGD dan Harga SIR Rupiah",
+                trendline="ols"
+            )
+            st.plotly_chart(fig2, use_container_width=True)
+            
+        else:
+            st.info("Belum ada data harga tertinggi. Data akan muncul setelah diinisialisasi.")
+            
+        # Form untuk menambah data jika terotentikasi
+        if st.session_state.is_authenticated:
+            with st.expander("Tambah Data Harga Tertinggi"):
+                with st.form("form_harga_tertinggi"):
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        tanggal = st.date_input("Tanggal", date.today(), key="tanggal_tertinggi")
+                        harga_rupiah = st.number_input("Harga Rupiah", min_value=0.0, step=100.0, key="hr_tertinggi")
+                        harga_rupiah_100 = st.number_input("Harga Rp/100", min_value=0.0, step=0.1, key="hr100_tertinggi")
+                        
+                    with col2:
+                        harga_sir_sgd = st.number_input("Harga SIR SGD", min_value=0.0, step=0.1, key="hsg_tertinggi")
+                        harga_sir_rupiah = st.number_input("Harga SIR (Rp)", min_value=0.0, step=100.0, key="hsr_tertinggi")
+                    
+                    submit_button = st.form_submit_button("Simpan Data")
+                    
+                    if submit_button:
+                        try:
+                            simpan_harga_sicom_sir(
+                                sicom_id,
+                                tanggal,
+                                harga_rupiah,
+                                harga_rupiah_100,
+                                harga_sir_sgd,
+                                harga_sir_rupiah,
+                                "Tertinggi"
+                            )
+                            st.success("Data harga tertinggi berhasil disimpan!")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Terjadi kesalahan saat menyimpan data: {e}")
+    
+    with sicom_tab2:
+        st.subheader("Harga Perbandingan Terendah 3 Tahun Terakhir di Bulan Yang Sama")
+        
+        # Ambil data harga terendah
+        harga_terendah_data = get_harga_sicom_sir(sicom_id, "Terendah")
+        
+        if harga_terendah_data:
+            # Buat DataFrame untuk tampilan
+            df_terendah = pd.DataFrame([
+                {
+                    "ID": h.id,
+                    "Tanggal": h.tanggal.strftime("%d/%m/%Y"),
+                    "Harga Rupiah": format_currency(h.harga_rupiah),
+                    "Harga Rp/100": f"Rp {h.harga_rupiah_100:.2f}",
+                    "Harga SIR SGD": h.harga_sir_sgd,
+                    "Harga SIR (Rp)": format_currency(h.harga_sir_rupiah)
+                } for h in sorted(harga_terendah_data, key=lambda x: x.tanggal, reverse=True)
+            ])
+            
+            # Tampilkan data dalam tabel
+            st.dataframe(df_terendah.drop(columns=["ID"]), use_container_width=True)
+            
+            # Fitur edit dan hapus jika terotentikasi
+            if st.session_state.is_authenticated:
+                with st.expander("Edit/Hapus Data Harga Terendah"):
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        # Pilih data untuk dihapus
+                        if not df_terendah.empty:
+                            selected_data_id = st.selectbox(
+                                "Pilih data untuk dihapus", 
+                                df_terendah["ID"].tolist(),
+                                format_func=lambda x: f"Tanggal: {df_terendah[df_terendah['ID']==x]['Tanggal'].values[0]}"
+                            )
+                            
+                            if st.button("🗑️ Hapus Data", key="delete_terendah_button"):
+                                try:
+                                    hapus_harga_sicom_sir(selected_data_id, sicom_id)
+                                    st.success("Data berhasil dihapus!")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Terjadi kesalahan saat menghapus data: {e}")
+            
+            # Visualisasi data
+            st.subheader("Visualisasi Harga SICOM x SIR 20 (Terendah)")
+            
+            # Konversi data untuk visualisasi
+            vis_data = pd.DataFrame([
+                {
+                    "Tanggal": h.tanggal,
+                    "Harga Rupiah": h.harga_rupiah,
+                    "Harga SIR SGD": h.harga_sir_sgd,
+                    "Harga SIR (Rp)": h.harga_sir_rupiah,
+                    "Tahun": h.tanggal.year
+                } for h in harga_terendah_data
+            ])
+            
+            # Grafik harga SICOM x SIR 20
+            fig1 = px.line(
+                vis_data,
+                x="Tanggal",
+                y=["Harga Rupiah", "Harga SIR (Rp)"],
+                title="Perbandingan Harga Rupiah dan Harga SIR 20",
+                color_discrete_sequence=["blue", "red"]
+            )
+            st.plotly_chart(fig1, use_container_width=True)
+            
+            # Scatter plot harga SIR SGD vs harga SIR Rupiah
+            fig2 = px.scatter(
+                vis_data,
+                x="Harga SIR SGD",
+                y="Harga SIR (Rp)",
+                color="Tahun",
+                size="Harga Rupiah",
+                hover_name="Tanggal",
+                title="Hubungan antara Harga SIR SGD dan Harga SIR Rupiah",
+                trendline="ols"
+            )
+            st.plotly_chart(fig2, use_container_width=True)
+            
+        else:
+            st.info("Belum ada data harga terendah. Data akan muncul setelah diinisialisasi.")
+            
+        # Form untuk menambah data jika terotentikasi
+        if st.session_state.is_authenticated:
+            with st.expander("Tambah Data Harga Terendah"):
+                with st.form("form_harga_terendah"):
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        tanggal = st.date_input("Tanggal", date.today(), key="tanggal_terendah")
+                        harga_rupiah = st.number_input("Harga Rupiah", min_value=0.0, step=100.0, key="hr_terendah")
+                        harga_rupiah_100 = st.number_input("Harga Rp/100", min_value=0.0, step=0.1, key="hr100_terendah")
+                        
+                    with col2:
+                        harga_sir_sgd = st.number_input("Harga SIR SGD", min_value=0.0, step=0.1, key="hsg_terendah")
+                        harga_sir_rupiah = st.number_input("Harga SIR (Rp)", min_value=0.0, step=100.0, key="hsr_terendah")
+                    
+                    submit_button = st.form_submit_button("Simpan Data")
+                    
+                    if submit_button:
+                        try:
+                            simpan_harga_sicom_sir(
+                                sicom_id,
+                                tanggal,
+                                harga_rupiah,
+                                harga_rupiah_100,
+                                harga_sir_sgd,
+                                harga_sir_rupiah,
+                                "Terendah"
+                            )
+                            st.success("Data harga terendah berhasil disimpan!")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Terjadi kesalahan saat menyimpan data: {e}")
+
+    # Tambahkan bagian analisis perbandingan
+    st.subheader("Analisis Perbandingan Harga Tertinggi vs Terendah")
+    
+    # Ambil data untuk analisis
+    harga_tertinggi_data = get_harga_sicom_sir(sicom_id, "Tertinggi")
+    harga_terendah_data = get_harga_sicom_sir(sicom_id, "Terendah")
+    
+    if harga_tertinggi_data and harga_terendah_data:
+        # Konversi data untuk visualisasi
+        data_tertinggi = pd.DataFrame([
+            {
+                "Tanggal": h.tanggal,
+                "Harga SIR (Rp)": h.harga_sir_rupiah,
+                "Tipe": "Tertinggi",
+                "Tahun": h.tanggal.year
+            } for h in harga_tertinggi_data
+        ])
+        
+        data_terendah = pd.DataFrame([
+            {
+                "Tanggal": h.tanggal,
+                "Harga SIR (Rp)": h.harga_sir_rupiah,
+                "Tipe": "Terendah",
+                "Tahun": h.tanggal.year
+            } for h in harga_terendah_data
+        ])
+        
+        # Gabungkan data
+        data_gabungan = pd.concat([data_tertinggi, data_terendah])
+        
+        # Buat grafik perbandingan
+        fig = px.line(
+            data_gabungan,
+            x="Tanggal",
+            y="Harga SIR (Rp)",
+            color="Tipe",
+            title="Perbandingan Harga SIR 20 Tertinggi vs Terendah",
+            color_discrete_sequence=["green", "red"]
+        )
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Buat bar chart berdasarkan tahun
+        data_gabungan_tahun = data_gabungan.groupby(['Tahun', 'Tipe'])['Harga SIR (Rp)'].mean().reset_index()
+        
+        fig2 = px.bar(
+            data_gabungan_tahun,
+            x="Tahun",
+            y="Harga SIR (Rp)",
+            color="Tipe",
+            barmode="group",
+            title="Rata-rata Harga SIR 20 per Tahun",
+            color_discrete_sequence=["green", "red"]
+        )
+        st.plotly_chart(fig2, use_container_width=True)
+        
+        # Hitung selisih rata-rata
+        avg_tertinggi = data_tertinggi["Harga SIR (Rp)"].mean()
+        avg_terendah = data_terendah["Harga SIR (Rp)"].mean()
+        selisih = avg_tertinggi - avg_terendah
+        persen_selisih = (selisih / avg_terendah) * 100 if avg_terendah > 0 else 0
+        
+        # Tampilkan statistik
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Rata-rata Harga Tertinggi", format_currency(avg_tertinggi))
+        col2.metric("Rata-rata Harga Terendah", format_currency(avg_terendah))
+        col3.metric("Selisih", format_currency(selisih), f"{persen_selisih:.2f}%")
+        
+        # Tampilkan kesimpulan
+        st.subheader("Kesimpulan")
+        st.write(f"""
+        Berdasarkan analisis data harga SICOM x SIR 20, dapat disimpulkan:
+        
+        1. Selisih rata-rata antara harga tertinggi dan terendah adalah {format_currency(selisih)} atau sekitar {persen_selisih:.2f}%.
+        2. Secara historis, terdapat fluktuasi signifikan pada harga SIR 20 yang dapat menjadi pertimbangan dalam strategi jual-beli.
+        3. Penting untuk memperhatikan tren harga berdasarkan bulan untuk menentukan waktu optimal dalam transaksi.
+        """)
+    else:
+        st.info("Belum cukup data untuk melakukan analisis perbandingan.")
+
 # Footer
 st.markdown("---")
 st.markdown("© 2025 Aplikasi Laporan Penjualan Karet")
