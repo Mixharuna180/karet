@@ -289,26 +289,32 @@ with tab1:
         st.plotly_chart(fig, use_container_width=True)
         
         # Plot comparison between price and distance
+        # Tambahkan kolom untuk nilai absolut keuntungan bersih untuk ukuran marker
+        df_penjualan["Keuntungan_Bersih_Abs"] = np.abs(df_penjualan["Keuntungan Bersih"])
+        
+        # Gunakan nilai absolut untuk size dan nilai asli untuk color
         fig2 = px.scatter(
             df_penjualan,
             x="Jarak (km)",
             y="Harga Jual (Rp/kg)",
-            size="Keuntungan Bersih",
-            color="Keuntungan Bersih",
+            size="Keuntungan_Bersih_Abs",  # Gunakan nilai absolut untuk ukuran
+            color="Keuntungan Bersih",    # Tetap gunakan nilai asli untuk warna
             hover_name="Tanggal",
             title="Hubungan antara Jarak, Harga Jual, dan Keuntungan",
+            size_max=50,  # Batasi ukuran maksimum marker
         )
         st.plotly_chart(fig2, use_container_width=True)
         
-        # Plot susut vs distance
+        # Plot susut vs distance - pastikan menggunakan nilai positif untuk ukuran marker
         fig3 = px.scatter(
             df_penjualan,
             x="Jarak (km)",
             y="Susut (%)",
-            size="Berat Awal (kg)",
+            size="Berat Awal (kg)",  # Ini seharusnya selalu positif
             color="Keuntungan Bersih",
             hover_name="Tanggal",
             title="Hubungan antara Jarak dan Susut",
+            size_max=40  # Batasi ukuran maksimum marker
         )
         st.plotly_chart(fig3, use_container_width=True)
     else:
