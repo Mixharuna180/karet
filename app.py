@@ -748,12 +748,46 @@ if st.button("Buat Laporan PDF"):
                     • Rekomendasi: Fokus pada penjualan ke perusahaan dengan harga jual tinggi dan jarak yang tidak terlalu jauh untuk mengoptimalkan keuntungan.
                     """
                 
+                # Dapatkan data harga SICOM SIR untuk PDF
+                harga_tertinggi_data = []
+                harga_terendah_data = []
+                
+                try:
+                    # Ambil data SICOM dari database
+                    sicom_data_tertinggi = get_harga_sicom_sir(tipe_data="Tertinggi")
+                    sicom_data_terendah = get_harga_sicom_sir(tipe_data="Terendah")
+                    
+                    # Format data untuk PDF
+                    for item in sicom_data_tertinggi:
+                        harga_tertinggi_data.append({
+                            'tanggal': item.tanggal,
+                            'harga_rupiah': format_currency(item.harga_rupiah),
+                            'harga_rupiah_100': format_currency(item.harga_rupiah_100),
+                            'harga_sir_sgd': format_currency(item.harga_sir_sgd),
+                            'harga_sir_rupiah': format_currency(item.harga_sir_rupiah)
+                        })
+                    
+                    for item in sicom_data_terendah:
+                        harga_terendah_data.append({
+                            'tanggal': item.tanggal,
+                            'harga_rupiah': format_currency(item.harga_rupiah),
+                            'harga_rupiah_100': format_currency(item.harga_rupiah_100),
+                            'harga_sir_sgd': format_currency(item.harga_sir_sgd),
+                            'harga_sir_rupiah': format_currency(item.harga_sir_rupiah)
+                        })
+                except Exception as e:
+                    st.warning(f"Gagal memuat data SICOM SIR: {e}")
+                
                 # Data untuk PDF
                 pdf_data = {
                     "perusahaan": perusahaan_data,
                     "penjualan_karet": penjualan_karet_data,
                     "strategi_risiko": strategi_risiko_data,
                     "realisasi_anggaran": realisasi_anggaran_data,
+                    "harga_sicom_sir": {
+                        "harga_tertinggi": harga_tertinggi_data,
+                        "harga_terendah": harga_terendah_data
+                    },
                     "kesimpulan": kesimpulan
                 }
                 
