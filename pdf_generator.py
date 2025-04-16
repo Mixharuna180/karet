@@ -794,9 +794,36 @@ def generate_pdf_penjualan_karet(data, title="Laporan Penjualan Karet"):
                 content.append(comparison_chart)
                 content.append(Spacer(1, 12))
                 
-                # Tambahkan kesimpulan
-                avg_tertinggi = sum([parse_currency_id(h.get('harga_sir_rupiah', 0)) for h in data['harga_sicom_sir']['harga_tertinggi']]) / len(data['harga_sicom_sir']['harga_tertinggi']) if data['harga_sicom_sir']['harga_tertinggi'] else 0
-                avg_terendah = sum([parse_currency_id(h.get('harga_sir_rupiah', 0)) for h in data['harga_sicom_sir']['harga_terendah']]) / len(data['harga_sicom_sir']['harga_terendah']) if data['harga_sicom_sir']['harga_terendah'] else 0
+                # Tambahkan kesimpulan dengan penanganan error
+                try:
+                    # Debugging untuk melihat nilai-nilai yang ada
+                    print("Nilai harga tertinggi:")
+                    for h in data['harga_sicom_sir']['harga_tertinggi']:
+                        print(f"  - {h.get('harga_sir_rupiah', 0)}")
+                    
+                    # Gunakan list comprehension dengan penanganan error untuk setiap item
+                    nilai_tertinggi = []
+                    for h in data['harga_sicom_sir']['harga_tertinggi']:
+                        try:
+                            nilai = parse_currency_id(h.get('harga_sir_rupiah', 0))
+                            nilai_tertinggi.append(nilai)
+                        except Exception as e:
+                            print(f"Error parsing harga tertinggi: {e}")
+                    
+                    nilai_terendah = []
+                    for h in data['harga_sicom_sir']['harga_terendah']:
+                        try:
+                            nilai = parse_currency_id(h.get('harga_sir_rupiah', 0))
+                            nilai_terendah.append(nilai)
+                        except Exception as e:
+                            print(f"Error parsing harga terendah: {e}")
+                    
+                    avg_tertinggi = sum(nilai_tertinggi) / len(nilai_tertinggi) if nilai_tertinggi else 0
+                    avg_terendah = sum(nilai_terendah) / len(nilai_terendah) if nilai_terendah else 0
+                except Exception as e:
+                    print(f"Error calculating averages: {e}")
+                    avg_tertinggi = 0
+                    avg_terendah = 0
                 selisih = avg_tertinggi - avg_terendah
                 persen_selisih = (selisih / avg_terendah) * 100 if avg_terendah > 0 else 0
                 

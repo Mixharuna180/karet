@@ -795,6 +795,11 @@ if st.button("Buat Laporan PDF"):
                 try:
                     # Buat PDF dengan lebih banyak informasi debug
                     st.write("Memulai pembuatan PDF...")
+                    
+                    # Debug informasi
+                    st.write(f"Data untuk PDF: {list(pdf_data.keys())}")
+                    if 'harga_sicom_sir' in pdf_data:
+                        st.write(f"Data SICOM SIR: Tertinggi ({len(pdf_data['harga_sicom_sir']['harga_tertinggi'])}), Terendah ({len(pdf_data['harga_sicom_sir']['harga_terendah'])})")
                     pdf_bytes = generate_pdf_penjualan_karet(pdf_data, report_title)
                     
                     # Buat nama file dengan format yang diminta: Laporan_Keuangan_karet(Date, Time).pdf
