@@ -8,7 +8,7 @@ import base64
 from utils import format_currency, format_percentage
 from database import (
     get_perusahaan, get_perusahaan_by_id, tambah_perusahaan,
-    get_penjualan_karet, simpan_penjualan_karet,
+    get_penjualan_karet, simpan_penjualan_karet, get_penjualan_karet_by_id, hapus_penjualan_karet,
     get_strategi_risiko, simpan_strategi_risiko,
     get_realisasi_anggaran, simpan_realisasi_anggaran,
     get_realisasi_anggaran_by_id, hapus_realisasi_anggaran,
