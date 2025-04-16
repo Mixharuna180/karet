@@ -517,16 +517,61 @@ with tab3:
         
         # Grouping kredit by keterangan
         if not df_anggaran.empty:
-            kredit_by_category = df_anggaran[df_anggaran["Kredit (Out)"] > 0].groupby("Keterangan")["Kredit (Out)"].sum().reset_index()
+            # Membuat data frame untuk analisis
+            kredit_df = df_anggaran[df_anggaran["Kredit (Out)"] > 0].copy()
             
-            if not kredit_by_category.empty:
+            if not kredit_df.empty:
+                # Tambahkan kolom total volume untuk setiap kategori
+                volume_by_category = {}
+                for _, row in kredit_df.iterrows():
+                    kategori = row["Keterangan"]
+                    volume = row["Volume"]
+                    if kategori in volume_by_category:
+                        volume_by_category[kategori] += f", {volume}"
+                    else:
+                        volume_by_category[kategori] = volume
+                
+                # Agregasi berdasarkan kategori
+                kredit_by_category = kredit_df.groupby("Keterangan")["Kredit (Out)"].sum().reset_index()
+                
+                # Tambahkan informasi volume ke hover text
+                hover_data = {
+                    "Kredit (Out)": True,
+                    "Volume": [volume_by_category.get(k, "N/A") for k in kredit_by_category["Keterangan"]]
+                }
+                
+                # Hitung total biaya
+                total_kredit = kredit_by_category["Kredit (Out)"].sum()
+                
+                # Buat pie chart dengan informasi tambahan
                 fig_pie = px.pie(
                     kredit_by_category,
                     values="Kredit (Out)",
                     names="Keterangan",
-                    title="Distribusi Pengeluaran berdasarkan Kategori"
+                    title=f"Distribusi Pengeluaran (Total: {format_currency(total_kredit)})",
+                    hover_data=hover_data,
+                    labels={"Kredit (Out)": "Jumlah Pengeluaran", "Volume": "Volume"}
                 )
+                
+                # Tambahkan informasi persentase dan volume ke dalam teks label pie
+                fig_pie.update_traces(
+                    hovertemplate="<b>%{label}</b><br>Jumlah: %{value}<br>Persentase: %{percent}<br>Volume: %{customdata[1]}"
+                )
+                
                 st.plotly_chart(fig_pie, use_container_width=True)
+                
+                # Tambahkan detail tabel untuk volume dan biaya
+                st.subheader("Detail Pengeluaran per Kategori")
+                
+                # Buat dataframe detail dengan volume dan biaya
+                detail_df = pd.DataFrame({
+                    "Kategori": kredit_by_category["Keterangan"],
+                    "Total Biaya": [format_currency(val) for val in kredit_by_category["Kredit (Out)"]],
+                    "Persentase": [f"{val/total_kredit*100:.2f}%" for val in kredit_by_category["Kredit (Out)"]],
+                    "Volume": [volume_by_category.get(k, "N/A") for k in kredit_by_category["Keterangan"]]
+                })
+                
+                st.dataframe(detail_df, use_container_width=True)
     else:
         st.info("Belum ada data realisasi anggaran. Silakan tambahkan data baru menggunakan form di atas.")
 

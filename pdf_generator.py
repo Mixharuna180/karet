@@ -1,11 +1,17 @@
 from reportlab.lib.pagesizes import A4, landscape
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle 
 from reportlab.lib import colors
 from reportlab.lib.units import cm, inch
 from io import BytesIO
 import datetime
 import textwrap
+import matplotlib.pyplot as plt
+import numpy as np
+import io
+import pandas as pd
+import matplotlib
+matplotlib.use('Agg')
 from utils import format_currency
 
 def wrap_text(text, max_width=40):
@@ -25,6 +31,128 @@ def wrap_text(text, max_width=40):
     # Use textwrap to wrap text to fit column width
     wrapped_text = '\n'.join(textwrap.wrap(text, width=max_width))
     return wrapped_text
+
+def create_cash_flow_chart(anggaran_data):
+    """
+    Create a cash flow chart for PDF report
+    
+    Args:
+        anggaran_data (list): List of dictionaries with realisasi anggaran data
+        
+    Returns:
+        Image: ReportLab Image object
+    """
+    # Convert data to right format
+    dates = []
+    debets = []
+    kredits = []
+    saldos = []
+    
+    for item in anggaran_data:
+        # Convert date from string to datetime if needed
+        if isinstance(item.get('tanggal'), str):
+            date_val = datetime.datetime.strptime(item.get('tanggal'), "%d/%m/%Y")
+        else:
+            date_val = item.get('tanggal')
+            
+        dates.append(date_val)
+        
+        # Extract numeric values from formatted strings
+        debet_val = float(item.get('debet').replace('Rp', '').replace('.', '').replace(',', '.')) if isinstance(item.get('debet'), str) else item.get('debet')
+        kredit_val = float(item.get('kredit').replace('Rp', '').replace('.', '').replace(',', '.')) if isinstance(item.get('kredit'), str) else item.get('kredit')
+        saldo_val = float(item.get('saldo').replace('Rp', '').replace('.', '').replace(',', '.')) if isinstance(item.get('saldo'), str) else item.get('saldo')
+        
+        debets.append(debet_val)
+        kredits.append(kredit_val)
+        saldos.append(saldo_val)
+    
+    # Create figure
+    plt.figure(figsize=(10, 5))
+    
+    # Bar chart for debet and kredit
+    bar_width = 0.35
+    x = np.arange(len(dates))
+    plt.bar(x - bar_width/2, debets, bar_width, label='Debet (In)', color='blue')
+    plt.bar(x + bar_width/2, [-k for k in kredits], bar_width, label='Kredit (Out)', color='red')
+    
+    # Line chart for saldo
+    plt.plot(x, saldos, 'go-', linewidth=2, markersize=8, label='Saldo')
+    
+    # Format the chart
+    plt.xlabel('Tanggal')
+    plt.ylabel('Rupiah')
+    plt.title('Arus Kas dan Saldo')
+    plt.xticks(x, [d.strftime('%d/%m/%Y') if isinstance(d, datetime.datetime) else d for d in dates], rotation=45)
+    plt.legend()
+    plt.grid(True, linestyle='--', alpha=0.7)
+    plt.tight_layout()
+    
+    # Save to BytesIO
+    img_data = BytesIO()
+    plt.savefig(img_data, format='png', dpi=150)
+    img_data.seek(0)
+    plt.close()
+    
+    # Return as ReportLab Image
+    return Image(img_data, width=700, height=350)
+
+def create_distribution_chart(anggaran_data):
+    """
+    Create a pie chart showing distribution of kredit (expenses) with volume and total
+    
+    Args:
+        anggaran_data (list): List of dictionaries with realisasi anggaran data
+        
+    Returns:
+        Image: ReportLab Image object
+    """
+    # Create a DataFrame from the data
+    expense_data = {}
+    volume_data = {}
+    
+    for item in anggaran_data:
+        keterangan = item.get('keterangan', 'Lainnya')
+        
+        # Extract numeric value from formatted string
+        kredit_val = float(item.get('kredit').replace('Rp', '').replace('.', '').replace(',', '.')) if isinstance(item.get('kredit'), str) else item.get('kredit')
+        
+        if kredit_val > 0:  # Only include expenses
+            if keterangan in expense_data:
+                expense_data[keterangan] += kredit_val
+                volume_data[keterangan] += f", {item.get('volume', '')}"
+            else:
+                expense_data[keterangan] = kredit_val
+                volume_data[keterangan] = item.get('volume', '')
+    
+    # Create figure
+    if expense_data:
+        plt.figure(figsize=(8, 6))
+        
+        # Create pie chart
+        labels = list(expense_data.keys())
+        sizes = list(expense_data.values())
+        
+        # Add percentage, value and volume to labels
+        total = sum(sizes)
+        labels_with_info = [f"{l}\n{s/total*100:.1f}%\n{format_currency(s)}\nVol: {volume_data[l]}" for l, s in zip(labels, sizes)]
+        
+        plt.pie(sizes, labels=labels_with_info, autopct='', startangle=90, shadow=False, 
+                wedgeprops={'edgecolor': 'white', 'linewidth': 1})
+        
+        plt.axis('equal')
+        plt.title(f'Distribusi Pengeluaran (Total: {format_currency(total)})')
+        plt.tight_layout()
+        
+        # Save to BytesIO
+        img_data = BytesIO()
+        plt.savefig(img_data, format='png', dpi=150)
+        img_data.seek(0)
+        plt.close()
+        
+        # Return as ReportLab Image
+        return Image(img_data, width=500, height=375)
+    
+    return None
 
 def generate_pdf_penjualan_karet(data, title="Laporan Penjualan Karet"):
     """
@@ -234,6 +362,19 @@ def generate_pdf_penjualan_karet(data, title="Laporan Penjualan Karet"):
         
         content.append(anggaran_table)
         content.append(Spacer(1, 24))
+        
+        # Add cash flow chart to the report
+        content.append(Paragraph("Visualisasi Arus Kas", subtitle_style))
+        cash_flow_chart = create_cash_flow_chart(data['realisasi_anggaran'])
+        content.append(cash_flow_chart)
+        content.append(Spacer(1, 12))
+        
+        # Add distribution pie chart to the report
+        content.append(Paragraph("Distribusi Pengeluaran", subtitle_style))
+        distribution_chart = create_distribution_chart(data['realisasi_anggaran'])
+        if distribution_chart:
+            content.append(distribution_chart)
+            content.append(Spacer(1, 12))
     
     # Kesimpulan & Rekomendasi
     if 'kesimpulan' in data and data['kesimpulan']:
