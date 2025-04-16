@@ -37,6 +37,7 @@ class Perusahaan(Base):
     penjualan_karet = relationship("PenjualanKaret", back_populates="perusahaan", cascade="all, delete-orphan")
     strategi_risiko = relationship("StrategiRisiko", back_populates="perusahaan", cascade="all, delete-orphan")
     realisasi_anggaran = relationship("RealisasiAnggaran", back_populates="perusahaan", cascade="all, delete-orphan")
+    harga_sicom_sir = relationship("HargaSicomSir", back_populates="perusahaan", cascade="all, delete-orphan")
 
 class PenjualanKaret(Base):
     __tablename__ = 'penjualan_karet'
@@ -86,6 +87,21 @@ class RealisasiAnggaran(Base):
     
     # Relationship
     perusahaan = relationship("Perusahaan", back_populates="realisasi_anggaran")
+
+class HargaSicomSir(Base):
+    __tablename__ = 'harga_sicom_sir'
+    
+    id = Column(Integer, primary_key=True)
+    perusahaan_id = Column(Integer, ForeignKey('perusahaan.id'), nullable=False)
+    tanggal = Column(Date)
+    harga_rupiah = Column(Float, default=0)  # Harga Rupiah/kg
+    harga_rupiah_100 = Column(Float, default=0)  # Harga Rupiah/100kg
+    harga_sir_sgd = Column(Float, default=0)  # Harga SIR SGD
+    harga_sir_rupiah = Column(Float, default=0)  # Harga SIR (Rp)
+    tipe_data = Column(String)  # "Tertinggi" atau "Terendah"
+    
+    # Relationship
+    perusahaan = relationship("Perusahaan", back_populates="harga_sicom_sir")
 
 # Buat tabel di database jika belum ada
 Base.metadata.create_all(engine)
@@ -631,9 +647,205 @@ def fix_all_realisasi_anggaran_saldo():
                 tx.saldo = running_saldo
                 print(f"Memperbaiki saldo untuk transaksi {tx.id}: {tx.keterangan}, tanggal {tx.tanggal}")
     
-    # Simpan perubahan
+# Function untuk menyimpan dan mendapatkan data harga SICOM x SIR 20
+def simpan_harga_sicom_sir(perusahaan_id, tanggal, harga_rupiah, harga_rupiah_100, harga_sir_sgd, harga_sir_rupiah, tipe_data):
+    """
+    Menyimpan data harga SICOM x SIR 20
+    """
+    db = get_db_session()
+    
+    # Cek apakah data sudah ada
+    existing_data = db.query(HargaSicomSir).filter(
+        HargaSicomSir.perusahaan_id == perusahaan_id,
+        HargaSicomSir.tanggal == tanggal,
+        HargaSicomSir.tipe_data == tipe_data
+    ).first()
+    
+    if existing_data:
+        # Update data yang sudah ada
+        existing_data.harga_rupiah = harga_rupiah
+        existing_data.harga_rupiah_100 = harga_rupiah_100
+        existing_data.harga_sir_sgd = harga_sir_sgd
+        existing_data.harga_sir_rupiah = harga_sir_rupiah
+    else:
+        # Buat data baru
+        new_data = HargaSicomSir(
+            perusahaan_id=perusahaan_id,
+            tanggal=tanggal,
+            harga_rupiah=harga_rupiah,
+            harga_rupiah_100=harga_rupiah_100,
+            harga_sir_sgd=harga_sir_sgd,
+            harga_sir_rupiah=harga_sir_rupiah,
+            tipe_data=tipe_data
+        )
+        db.add(new_data)
+    
     db.commit()
-    print("Proses perbaikan saldo selesai.")
+
+def get_harga_sicom_sir(perusahaan_id=None, tipe_data=None):
+    """
+    Mendapatkan data harga SICOM x SIR 20
+    """
+    db = get_db_session()
+    try:
+        query = db.query(HargaSicomSir)
+        
+        if perusahaan_id:
+            query = query.filter(HargaSicomSir.perusahaan_id == perusahaan_id)
+            
+        if tipe_data:
+            query = query.filter(HargaSicomSir.tipe_data == tipe_data)
+        
+        return query.order_by(HargaSicomSir.tanggal).all()
+    except Exception as e:
+        print(f"Error saat mengambil data harga SICOM x SIR 20: {e}")
+        raise e
+    finally:
+        db.close()
+
+def get_harga_sicom_sir_by_id(id):
+    """
+    Mendapatkan data harga SICOM x SIR 20 berdasarkan ID
+    """
+    db = get_db_session()
+    try:
+        return db.query(HargaSicomSir).filter(HargaSicomSir.id == id).first()
+    except Exception as e:
+        print(f"Error saat mengambil data harga SICOM x SIR 20 by ID: {e}")
+        raise e
+    finally:
+        db.close()
+
+def hapus_harga_sicom_sir(id, perusahaan_id):
+    """
+    Menghapus data harga SICOM x SIR 20 berdasarkan ID
+    """
+    db = get_db_session()
+    try:
+        harga_sicom_sir = db.query(HargaSicomSir).filter(
+            HargaSicomSir.id == id, 
+            HargaSicomSir.perusahaan_id == perusahaan_id
+        ).first()
+        
+        if not harga_sicom_sir:
+            raise Exception("Data harga SICOM x SIR 20 tidak ditemukan")
+        
+        db.delete(harga_sicom_sir)
+        db.commit()
+        return True
+    except Exception as e:
+        db.rollback()
+        raise e
+    finally:
+        db.close()
+
+def init_harga_sicom_sir_data():
+    """
+    Inisialisasi data harga SICOM x SIR 20 dari contoh
+    """
+    # ID perusahaan default (SICOM)
+    db = get_db_session()
+    sicom_perusahaan = db.query(Perusahaan).filter(Perusahaan.nama == "SICOM").first()
+    
+    if not sicom_perusahaan:
+        # Buat perusahaan untuk SICOM jika belum ada
+        sicom_perusahaan = Perusahaan(
+            nama="SICOM",
+            jenis="Pasar Karet"
+        )
+        db.add(sicom_perusahaan)
+        db.commit()
+        db.refresh(sicom_perusahaan)
+    
+    # Cek apakah sudah ada data harga
+    existing_data = db.query(HargaSicomSir).filter(
+        HargaSicomSir.perusahaan_id == sicom_perusahaan.id
+    ).first()
+    
+    if existing_data:
+        # Data sudah ada, tidak perlu inisialisasi
+        return sicom_perusahaan.id
+    
+    # Data harga tertinggi
+    harga_tertinggi = [
+        {"tanggal": "2/3/2025", "harga_rupiah": 16580, "harga_rupiah_100": 165.80, "harga_sir_sgd": 206.10, "harga_sir_rupiah": 34171},
+        {"tanggal": "23/02/2025", "harga_rupiah": 16592, "harga_rupiah_100": 165.92, "harga_sir_sgd": 221.40, "harga_sir_rupiah": 36735},
+        {"tanggal": "16/02/2025", "harga_rupiah": 16375, "harga_rupiah_100": 163.75, "harga_sir_sgd": 210.00, "harga_sir_rupiah": 34388},
+        {"tanggal": "9/2/2025", "harga_rupiah": 16400, "harga_rupiah_100": 164.00, "harga_sir_sgd": 205.20, "harga_sir_rupiah": 33653},
+        {"tanggal": "25/02/2024", "harga_rupiah": 15735, "harga_rupiah_100": 157.35, "harga_sir_sgd": 165.00, "harga_sir_rupiah": 25963},
+        {"tanggal": "18/02/2024", "harga_rupiah": 15685, "harga_rupiah_100": 156.85, "harga_sir_sgd": 161.00, "harga_sir_rupiah": 25253},
+        {"tanggal": "11/2/2024", "harga_rupiah": 15677, "harga_rupiah_100": 156.77, "harga_sir_sgd": 154.50, "harga_sir_rupiah": 24221},
+        {"tanggal": "4/2/2024", "harga_rupiah": 15757, "harga_rupiah_100": 157.57, "harga_sir_sgd": 153.30, "harga_sir_rupiah": 24155},
+        {"tanggal": "26/02/2023", "harga_rupiah": 15330, "harga_rupiah_100": 153.30, "harga_sir_sgd": 142.00, "harga_sir_rupiah": 21769},
+        {"tanggal": "19/02/2023", "harga_rupiah": 15229, "harga_rupiah_100": 152.29, "harga_sir_sgd": 141.40, "harga_sir_rupiah": 21534},
+        {"tanggal": "12/2/2023", "harga_rupiah": 15227, "harga_rupiah_100": 152.27, "harga_sir_sgd": 139.10, "harga_sir_rupiah": 21181},
+        {"tanggal": "5/2/2023", "harga_rupiah": 15153, "harga_rupiah_100": 151.53, "harga_sir_sgd": 141.70, "harga_sir_rupiah": 21472}
+    ]
+    
+    # Data harga terendah
+    harga_terendah = [
+        {"tanggal": "27/10/2024", "harga_rupiah": 15778, "harga_rupiah_100": 157.78, "harga_sir_sgd": 197.30, "harga_sir_rupiah": 31130},
+        {"tanggal": "20/10/2024", "harga_rupiah": 15651, "harga_rupiah_100": 156.51, "harga_sir_sgd": 198.80, "harga_sir_rupiah": 31114},
+        {"tanggal": "13/10/2024", "harga_rupiah": 15615, "harga_rupiah_100": 156.15, "harga_sir_sgd": 202.30, "harga_sir_rupiah": 31589},
+        {"tanggal": "6/10/2024", "harga_rupiah": 15702, "harga_rupiah_100": 157.02, "harga_sir_sgd": 217.90, "harga_sir_rupiah": 34215},
+        {"tanggal": "29/10/2023", "harga_rupiah": 15953, "harga_rupiah_100": 159.53, "harga_sir_sgd": 152.90, "harga_sir_rupiah": 24392},
+        {"tanggal": "22/10/2023", "harga_rupiah": 15967, "harga_rupiah_100": 159.67, "harga_sir_sgd": 148.80, "harga_sir_rupiah": 23759},
+        {"tanggal": "15/10/2023", "harga_rupiah": 15889, "harga_rupiah_100": 158.89, "harga_sir_sgd": 150.00, "harga_sir_rupiah": 23834},
+        {"tanggal": "8/10/2023", "harga_rupiah": 15742, "harga_rupiah_100": 157.42, "harga_sir_sgd": 149.00, "harga_sir_rupiah": 23456},
+        {"tanggal": "1/10/2023", "harga_rupiah": 15646, "harga_rupiah_100": 156.46, "harga_sir_sgd": 141.20, "harga_sir_rupiah": 22092},
+        {"tanggal": "30/10/2022", "harga_rupiah": 15760, "harga_rupiah_100": 157.60, "harga_sir_sgd": 125.30, "harga_sir_rupiah": 19747},
+        {"tanggal": "23/10/2022", "harga_rupiah": 15645, "harga_rupiah_100": 156.45, "harga_sir_sgd": 124.70, "harga_sir_rupiah": 19509},
+        {"tanggal": "16/10/2022", "harga_rupiah": 15635, "harga_rupiah_100": 156.35, "harga_sir_sgd": 132.70, "harga_sir_rupiah": 20748},
+        {"tanggal": "9/10/2022", "harga_rupiah": 15426, "harga_rupiah_100": 154.26, "harga_sir_sgd": 140.40, "harga_sir_rupiah": 21658},
+        {"tanggal": "2/10/2022", "harga_rupiah": 15312, "harga_rupiah_100": 153.12, "harga_sir_sgd": 138.00, "harga_sir_rupiah": 21131}
+    ]
+    
+    # Konversi data harga tertinggi
+    harga_tertinggi_data = []
+    for data in harga_tertinggi:
+        tanggal_str = data["tanggal"]
+        # Parse tanggal dari format "DD/MM/YYYY"
+        day, month, year = map(int, tanggal_str.split('/'))
+        tanggal = datetime.date(year, month, day)
+        
+        harga_tertinggi_data.append(
+            HargaSicomSir(
+                perusahaan_id=sicom_perusahaan.id,
+                tanggal=tanggal,
+                harga_rupiah=data["harga_rupiah"],
+                harga_rupiah_100=data["harga_rupiah_100"],
+                harga_sir_sgd=data["harga_sir_sgd"],
+                harga_sir_rupiah=data["harga_sir_rupiah"],
+                tipe_data="Tertinggi"
+            )
+        )
+    
+    # Konversi data harga terendah
+    harga_terendah_data = []
+    for data in harga_terendah:
+        tanggal_str = data["tanggal"]
+        # Parse tanggal dari format "DD/MM/YYYY"
+        day, month, year = map(int, tanggal_str.split('/'))
+        tanggal = datetime.date(year, month, day)
+        
+        harga_terendah_data.append(
+            HargaSicomSir(
+                perusahaan_id=sicom_perusahaan.id,
+                tanggal=tanggal,
+                harga_rupiah=data["harga_rupiah"],
+                harga_rupiah_100=data["harga_rupiah_100"],
+                harga_sir_sgd=data["harga_sir_sgd"],
+                harga_sir_rupiah=data["harga_sir_rupiah"],
+                tipe_data="Terendah"
+            )
+        )
+    
+    # Simpan data
+    db.add_all(harga_tertinggi_data)
+    db.add_all(harga_terendah_data)
+    db.commit()
+    
+    return sicom_perusahaan.id
 
 # Jalankan inisialisasi database
 try:
