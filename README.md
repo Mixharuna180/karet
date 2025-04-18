@@ -101,6 +101,58 @@ Setiap tab memiliki fungsi untuk mengekspor data ke PDF dengan grafik dan tabel 
 - `realisasi_anggaran`: Arus kas perusahaan
 - `harga_sicom_sir`: Data harga SICOM x SIR 20 (tertinggi/terendah)
 
+## Deployment ke Server Produksi
+
+Untuk mendeploy aplikasi ke server produksi sehingga dapat diakses dari IP publik, ikuti langkah-langkah berikut:
+
+### Deployment Otomatis
+
+1. Clone repositori ini ke server:
+   ```
+   git clone https://github.com/Mixharuna180/karet.git
+   cd karet
+   ```
+
+2. Jalankan script deployment sebagai root/sudo:
+   ```
+   sudo ./deploy.sh
+   ```
+   
+   Script ini akan:
+   - Menginstal Nginx sebagai reverse proxy
+   - Menginstal Supervisor untuk manajemen proses
+   - Menyalin aplikasi ke `/opt/karet_app`
+   - Mengatur aplikasi untuk berjalan sebagai service
+
+3. Setelah deployment selesai, aplikasi dapat diakses di:
+   - `http://IP_SERVER` (ganti IP_SERVER dengan alamat IP publik server)
+   - Atau melalui domain jika Anda sudah mengatur DNS
+
+### Kontrol Aplikasi
+
+Script deployment membuat beberapa file untuk kontrol aplikasi:
+
+- `/opt/karet_app/start-app.sh`: Untuk memulai aplikasi
+- `/opt/karet_app/stop-app.sh`: Untuk menghentikan aplikasi
+- `/opt/karet_app/restart-app.sh`: Untuk memulai ulang aplikasi
+
+### Konfigurasi SSL (HTTPS)
+
+Untuk mengaktifkan HTTPS, instal Certbot dan jalankan:
+
+```
+sudo certbot --nginx -d yourdomain.com
+```
+
+Ganti `yourdomain.com` dengan domain Anda.
+
+### Monitoring & Logs
+
+- Log aplikasi terdapat di:
+  - Error log: `/var/log/karet-app.err.log`
+  - Output log: `/var/log/karet-app.out.log`
+- Status aplikasi dapat diperiksa dengan: `sudo supervisorctl status karet-app`
+
 ## Kontribusi
 
 Kontribusi selalu diterima! Silakan kirim pull request atau buka issue untuk diskusi fitur baru.
