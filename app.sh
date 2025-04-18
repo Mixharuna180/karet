@@ -22,12 +22,28 @@ source venv/bin/activate
 
 echo "Menginstal dependensi Python..."
 pip install --upgrade pip
+
+# Pastikan Streamlit diinstal terlebih dahulu
+echo "Menginstal Streamlit..."
+pip install streamlit>=1.27.0
+
+# Install dependensi lainnya
+echo "Menginstal dependensi aplikasi lainnya..."
 # Install from pyproject.toml untuk memastikan versi yang kompatibel
 if [ -f "pyproject.toml" ]; then
     pip install -e .
 else
     # Fallback jika pyproject.toml tidak ada
-    pip install streamlit pandas matplotlib numpy plotly psycopg2-binary sqlalchemy reportlab statsmodels
+    pip install pandas>=2.0.0 matplotlib>=3.7.0 numpy>=1.24.0 plotly>=5.15.0 psycopg2-binary>=2.9.5 sqlalchemy>=2.0.0 reportlab>=3.6.0 statsmodels>=0.14.0
+fi
+
+# Verifikasi instalasi Streamlit
+if ! command -v streamlit &> /dev/null; then
+    echo "Streamlit gagal diinstal. Mencoba menginstal ulang..."
+    pip install --force-reinstall streamlit>=1.27.0
+    if ! command -v streamlit &> /dev/null; then
+        echo "PERINGATAN: Gagal menginstal Streamlit. Aplikasi mungkin tidak akan berjalan dengan benar."
+    fi
 fi
 
 # Memeriksa apakah PostgreSQL terinstal
@@ -92,7 +108,20 @@ echo "Cara menjalankan aplikasi:"
 echo "1. Aktifkan virtual environment: source venv/bin/activate"
 echo "2. Jalankan aplikasi: streamlit run app.py --server.port 5000"
 echo "==================================================="
+echo "Cara mengatasi masalah umum:"
+echo "- Error koneksi database: Pastikan PostgreSQL berjalan dengan 'sudo service postgresql status'"
+echo "- Streamlit tidak terpasang: Jalankan 'pip install streamlit>=1.27.0'"
+echo "- Dependensi tertinggal: Jalankan 'pip install -r requirements.txt' jika ada"
+echo "- Error port: Pastikan port 5000 tidak digunakan oleh aplikasi lain"
+echo "==================================================="
 echo "Memulai aplikasi sekarang..."
 
 # Jalankan aplikasi
-streamlit run app.py --server.port 5000
+streamlit run app.py --server.port 5000 || {
+  echo "==================================================="
+  echo "ERROR: Aplikasi gagal dijalankan!"
+  echo "Periksa pesan error di atas dan lihat dokumentasi untuk mengatasi masalah."
+  echo "Atau buka README.md untuk panduan lebih lanjut."
+  echo "==================================================="
+  exit 1
+}
